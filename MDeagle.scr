@@ -3,8 +3,8 @@
 # This file can be used to configure the editor windows.
 #
 # Uncomment this if you want a set of useful default shortcuts!
-#SCRIPT default-assign.scr;
-#
+SCRIPT MDdefault-assign.scr;
+SCRIPT MDmenu.scr
 
 BRD:
 MENU '[designlink22.png] Search and order : Run designlink-order.ulp -general;'\
