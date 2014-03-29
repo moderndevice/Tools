@@ -23,14 +23,20 @@ MENU 'Grid {\
              Off : Grid Off;\
            }'\
      'Display {\
-                Top       : Display None Top    Pads Vias Dimension; |\
-                Bottom    : Display None Bottom Pads Vias Dimension; |\
+            Top : Display None 1 17 18 21 27; |\
+            Top Text : Display None 17 18 21 20 27; |\
+                Copper Top : Display None Top Top Pads Vias; |\
+                Bottom    : Display None bstop Bottom Pads  Dimension; |\
                 Placeplan {\
                             Top    : Display None tPlace Dimension; |\
                             Bottom : Display None bPlace Dimension;\
                           }\
               }'\
-     '---'\
+      'Align {\
+      		Align : run tools/align.ulp;|\
+      		AlignDist : run tools/align.ulp -d;\
+              }'\
      'Fit : Window Fit;'\
-     'Add' 'Delete' 'Move' ';' 'Edit' 'Quit'\
+     'NoFill : RIPUP @;'\
+      '---'\
      ;
