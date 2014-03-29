@@ -1,0 +1,42 @@
+# Command Menu Setup
+#
+# This is an example that shows how to set up a complex command menu,
+# including submenus and command aliases. To display the command menu in
+# the editor windows you have to activate the option 'Command texts'
+# in the 'Options/User Interface' menu.
+#
+# PAB: Grid Menu Example:
+# MenuItemName : Grid  units value multiple ; Grid alternate units value;
+# 5m1-1        : Grid  mil    5        1    ; Grid    alt     mil    1;
+
+MENU 'Grid {\
+             Metric   {\
+                        1m1-.1   : Grid mm 1 1; Grid alt mm .1;|\
+                        1m1-.05   : Grid mm 1 1; Grid alt mm .05;\
+                      } |\            
+             5m1-1 : Grid mil 5 1; Grid alt mil 1; |\
+             5m5-1 :  Grid mil 5 5; Grid alt mil 1; |\
+             25m1-1 : Grid mil 25 1; Grid alt mil 1; |\
+             25m2-5 : Grid mil 25 2; Grid alt mil 5; |\  
+             50m1-5 : Grid mil 50 1; Grid alt mil 5; |\                  
+             On  : Grid On; |\ 
+             Off : Grid Off;\
+           }'\
+     'Display {\
+            Top : Display None 1 17 18 21 27; |\
+            Top Text : Display None 17 18 21 20 27; |\
+                Copper Top : Display None Top Top Pads Vias; |\
+                Bottom    : Display None bstop Bottom Pads  Dimension; |\
+                Placeplan {\
+                            Top    : Display None tPlace Dimension; |\
+                            Bottom : Display None bPlace Dimension;\
+                          }\
+              }'\
+      'Align {\
+      		Align : run tools/align.ulp;|\
+      		AlignDist : run tools/align.ulp -d;\
+              }'\
+     'Fit : Window Fit;'\
+     'NoFill : RIPUP @;'\
+      '---'\
+     ;
