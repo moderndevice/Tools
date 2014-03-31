@@ -1,0 +1,37 @@
+#usage "<b>snap pins in symbol to grid (default 100 Mil)</b><p>"
+       "Eaxample: run snap-pin-in-lbr [100]"
+        "<author>Author: librarian@cadsoft.de</author>"
+
+real Grid = 100;       // default 100 Mil
+string cmd = "";
+string s;
+
+if (argv[1]) Grid = strtod(argv[1]); // *** check command parameter ***
+if (Grid - trunc(Grid) || Grid < 10.0) {
+  dlgMessageBox("Do not use fraction of MIL or < 10 MIL for the GRID in the SYMBOL editor !", "OK");
+  exit(0);
+}
+
+real snap(int n) { // *** returns next grid point ***
+  return round(u2mil(n) / Grid) * Grid;
+}
+
+if (library) {
+  if (symbol) symbol(S) {
+    S.pins(P) {
+      if (snap(P.x) - u2mil(P.x) || snap(P.y) - u2mil(P.y) ) {   // *** check Pins on Grid
+        sprintf( s, "MOVE (%.5f %.5f) (%.2f %.2f);\n",
+                     u2mil(P.x), u2mil(P.y), snap(P.x), snap(P.y));
+        cmd +=  s;
+      }
+    }
+    if (cmd){
+      // if (dlgMessageBox(cmd, "OK", "Cancel") != 0) exit (-1);;
+      exit("GRID MIL FINEST;\n" + cmd + "GRID MIL 100 1 ON;");
+    }
+    else dlgMessageBox("All PINs of " + S.name + ".SYM on Grid.", "OK");
+  } 
+  else dlgMessageBox("Start this ULP in a Symbol-Editor", "OK");
+}
+else dlgMessageBox("Start this ULP in Library (Symbol)", "OK");
+

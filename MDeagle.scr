@@ -36,6 +36,7 @@ Change Width 12; #Routing width default to 12mil
 #changes background color of board (and associated palette) to white
 SET PALETTE WHITE;
 
+#Layer colors
 display none; display 1 16 17 18 19 20 21 22 23 24 45 51; display -25 -26 -27 -28;
 
 #Assign shortcuts
@@ -54,8 +55,10 @@ Assign AF12 'info';
 Assign F10 'Grid mil 50 on; Grid alt mil 25;';
 Assign AF10 'Grid mm 1 on; Grid alt mm 0.1;';
 
-SCRIPT MDmenu.scr;                # Adds custom menu
-SCRIPT MDdefaultcolors.scr;       # Configures custom palette
+Script MDmenu.scr;
+Script MDdefaultcolors.scr;
+
+
 
 SCH:
 Grid Default;

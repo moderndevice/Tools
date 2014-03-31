@@ -1,0 +1,250 @@
+#usage "<b>Export Partlist from board or schematic to .CSV or .TEX (LATEX -> Longtable)</b>\n"
+       "<p>This ULP generates either a .csv table (Microsoft-Excel or OpenOffice-Calc) or a .tex table (LaTeX, as \"Longtable\") for documentation purpose.<br>"
+       "<br>You can select, if your table should contain a consecutive number, name, value, package and/or library. "
+       "This ULP can be started either from a schematic or from the board as long as the appropriate files exist."
+       "<br><br>Version 0.01</p>"
+       "<author>Author: Matthias Meeh, 08/2009</author>"
+
+
+// *************************************************************************************
+// THIS PROGRAM IS PROVIDED AS IS AND WITHOUT WARRANTY OF ANY KIND, EXPRESSED OR IMPLIED
+// *************************************************************************************
+
+
+// ********* global variables ************
+int type_out;
+int contents_01 = 1;
+int contents_02 = 1;
+int contents_03 = 1;
+int contents_04 = 1;
+int contents_05 = 1;
+
+
+// ********* replace secific character - only for ".tex" files required ************ 
+string check(string checkstring){
+  string newstring = "";
+  int i = 0, add = 0, length_chkstr = 0, b_exit = 0;
+  length_chkstr = strlen(checkstring);
+  if (checkstring == "")
+    return (newstring = "	n.a.");
+  for (i=0;i<length_chkstr;i++){
+    switch (checkstring[i]){
+      case '$':
+      case '_':
+        newstring[i+add] = 0x5C; add++;
+        newstring[i+add] = checkstring[i];
+        break;
+      case '²':
+        newstring[i+add] = '2';
+        break;
+      case 0xB5:
+        newstring[i+add] = '$'; add++;
+        newstring[i+add] = 0x5C; add++;
+        newstring[i+add] = 'm'; add++;
+        newstring[i+add] = 'u'; add++;
+        newstring[i+add] = '$'; 
+        break;
+      default:
+        newstring[i+add] = checkstring[i];
+    }
+  }
+  newstring[i+add] = 0;
+  return newstring;
+}
+
+
+// ********* generate data list ************ 
+void generate_list(void){
+  if (type_out == 0){
+    int i = 0;
+    project.board(B) {
+      string fileName = dlgFileSave("Save File", filesetext(B.name, ".csv"), "*.csv");
+      if (fileName == "") 
+        exit(0);
+      output(fileName) {
+        printf("Bauteilliste für %s\n", B.name);
+        if (contents_01){
+	printf("No.:");
+	if ((contents_02)||(contents_03)||(contents_04)||(contents_05))
+	  printf("\;");
+        }
+        if (contents_02){
+	printf("Name:");
+	if ((contents_03)||(contents_04)||(contents_05))
+	  printf("\;");
+        }
+        if (contents_03){
+	printf("Value:");
+	if ((contents_04)||(contents_05))
+	  printf("\;");
+        }
+        if (contents_04){
+	printf("Package:");
+	if (contents_05)
+	  printf("\;");
+        }
+        if (contents_05)
+	printf("Library:");
+        B.elements(E) {
+          if (contents_01)
+	  printf("\n%d\;",++i);
+          if (contents_02)
+	  printf("%s\;", E.name);
+ 	if (contents_03){
+	  if (E.value == "")
+              printf(" ---\;");
+  	  else
+	    printf("%s\;", E.value);
+	}
+          if (contents_04)
+            printf("%s\;", E.package.name);
+          if (contents_05)
+            printf("%s\;", E.package.library);
+        }
+      }
+    }
+    exit(0);
+  }
+  if (type_out == 1){
+    int i = 0;
+    string temp;
+    project.board(B) {
+      string fileName = dlgFileSave("Save File", filesetext(B.name, ".tex"), "*.tex");
+      if (fileName == "") 
+        exit(0);
+      output(fileName) {
+        printf("%% \*\*\*\*\*\*\*\*\*\*  Eagle ULP \"parts2_csv_tex.ulp\", by Matthias Meeh, 2009   \*\*\*\*\*\*\*\*\*\*\n");
+        printf("\n%% Include this statement in your config file: \n");
+        printf("%%\\usepackage\{longtable\}\n"); 
+        printf("\n%% Use this statement at desired postion: \n");
+        printf("%%\\input\{"); printf(fileName); printf("\} \n\n");
+        printf("\\begin\{longtable\} \{");
+        if (contents_01)
+          printf("p\{1cm\} ");
+        if (contents_02)
+          printf("p\{2cm\} ");
+        if (contents_03)
+          printf("p\{3cm\} ");
+        if (contents_04)
+          printf("p\{4cm\} ");
+        if (contents_05)
+          printf("p\{2.5cm\} ");
+        printf("\}\n");
+        printf("	\\hline	");
+        if (contents_01){
+	printf("No.");
+	if ((contents_02)||(contents_03)||(contents_04)||(contents_05))
+	  printf("	\&");
+        }
+        if (contents_02){
+	printf("Name");
+	if ((contents_03)||(contents_04)||(contents_05))
+	  printf("	\&");
+        }
+        if (contents_03){
+	printf("Value");
+	if ((contents_04)||(contents_05))
+	  printf("	\&");
+        }
+        if (contents_04){
+	printf("Package");
+	if (contents_05)
+	  printf("	\&");
+        }
+        if (contents_05)
+	printf("Library");
+        printf("	\\\\	\\hline	\\endfirsthead\n");
+        printf("	\\hline	");
+        if (contents_01){
+	printf("No.");
+	if ((contents_02)||(contents_03)||(contents_04)||(contents_05))
+	  printf("	\&");
+        }
+        if (contents_02){
+	printf("Name");
+	if ((contents_03)||(contents_04)||(contents_05))
+	  printf("	\&");
+        }
+        if (contents_03){
+	printf("Value");
+	if ((contents_04)||(contents_05))
+	  printf("	\&");
+        }
+        if (contents_04){
+	printf("Package");
+	if (contents_05)
+	  printf("	\&");
+        }
+        if (contents_05)
+	printf("Library");
+        printf("	\\\\	\\hline	\\endhead\n");
+        printf("	\\hline	\\multicolumn\{%d\}\{c\}\{\\textit\{Continue on next page\}\}\\\\	\\hline	\\endfoot\n", (contents_01+contents_03+contents_03+contents_04+contents_05));
+        printf("	\\endlastfoot\n");
+        B.elements(E) {
+	if (contents_01){
+	  printf("	%d", ++i);
+	  if ((contents_02)||(contents_03)||(contents_04)||(contents_05))
+	    printf("	\&");
+	}
+	if (contents_02){
+	  printf("	%s", check (E.name));
+	  if ((contents_03)||(contents_04)||(contents_05))
+	    printf("	\&");
+	}
+	if (contents_03){
+	  printf("	%s", check (E.value));
+	  if ((contents_04)||(contents_05))
+	    printf("	\&");
+	}
+	if (contents_04){
+	  printf("	%s", check (E.package.name));
+	  if ((contents_05))
+	    printf("	\&");
+	}
+	if (contents_05)
+	  printf("	%s", check (E.package.library));
+          printf("\\\\\n");
+        }
+        printf("	\\hline\n");
+        printf("	\\caption\{Part List for %s\}\\\\\n", check(B.name));
+        printf("\\end\{longtable\}\n");
+        printf("\n\n");
+      }
+    }
+    exit(0);
+  }
+}
+
+
+// ********* dlg-Box for data type selection ************
+dlgDialog("Export as:") {
+  dlgGroup("Select Contents:") {
+    dlgCheckBox("&Consecutive Number", contents_01);
+    dlgCheckBox("&Name", contents_02);
+    dlgCheckBox("&Value", contents_03);
+    dlgCheckBox("&Package", contents_04);
+    dlgCheckBox("&Library", contents_05);
+  } 
+  dlgHBoxLayout {
+    dlgGroup("Output file") {
+      dlgRadioButton(".&csv (Excel,Calc,...)", type_out);
+      dlgRadioButton(".&tex (LaTeX)", type_out);
+    }
+  }
+  dlgHBoxLayout {
+    dlgPushButton("Cr&eate"){ 
+      if ((contents_01)||(contents_02)||(contents_03)||(contents_04)||(contents_05)){
+	generate_list();
+      }
+      else{
+	dlgMessageBox(";You must select at least one contents item!");		
+      }
+    }
+    dlgPushButton("C&ancel"){
+      exit(0);
+    }
+  }
+};
+
+
+// Ich habe fertig :-)
