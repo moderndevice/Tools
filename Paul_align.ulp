@@ -80,6 +80,100 @@ int alignment, xRefObject = INT_MAX, yRefObject = INT_MAX, xAligned = INT_MAX, y
 	alignToComponentFlag = true, keepFlag=false, alignToGridFlag = false, alignToObjectFlag = false, alignOnVerticalLine = false, alignOnHorizontalLine = false, regexFlag = false, snapFlag = false, distributeFlag = false, incrementFlag = false;
 real distance, increment, xAvg = 0.0, yAvg = 0.0;
 
+string cmd = "";
+
+string st = "";
+int Result = 0;
+string msg = "";
+//int Selected = 2; // initially selects "blue"
+
+string Text = "example text";
+
+int Lines = 0;
+
+// Checkboxes in Dialog
+int dlgIncrement  = 0;
+int distribute = 0;
+int vertical   = 0;
+int snap  = 0;
+int grid = 0;
+int align = 0;
+int horizontal = 0;
+int keepInOrder = 0;
+int dlgRegEx = 0;
+int alignToObject = 0;
+int alignToComponent = 0;
+
+// Front end for the align ULP
+// Paul Badger 2014
+
+Result = dlgDialog("Align ULP Dialog") {
+  dlgVBoxLayout {
+     dlgStretch(0);
+     dlgGroup("Align Options with flags for command line.") {
+        dlgStretch(0);
+        dlgGridLayout {
+            
+           dlgCell(1, 1) {  dlgCheckBox("&Snap to Grid -s", snap); };
+           dlgCell(2, 1) {  dlgCheckBox("&Force To Grid -f", grid); };
+           dlgCell(3, 1) {  dlgCheckBox("&Use Regular Expressions -e", dlgRegEx); }; 
+           dlgCell(4, 1) {  dlgCheckBox("&Force Horizontal -h", horizontal); };
+           dlgCell(5, 1) {  dlgCheckBox("&Force Vertical -v", vertical); };
+           dlgCell(6, 1) {  dlgCheckBox("&Keep Parts In Order -k", keepInOrder); };
+           dlgCell(7, 1) {  dlgCheckBox("&Align To Component -c", alignToComponent); };
+           dlgCell(8, 1) {  dlgCheckBox("&Align To Object -o", alignToObject); };       
+           dlgCell(9, 1) {  dlgCheckBox("&Use Regular Expressions -e", dlgRegEx); };   
+           dlgCell(10, 1){  dlgCheckBox("&Distribute -d", distribute); };
+           dlgCell(11, 1){  dlgCheckBox("&Increment -i", dlgIncrement); };
+           }
+       
+/*    if (dlgSelectionChanged()){
+               if (horizontal == 1){
+                 vertical = 0;  // mutally exclusive options
+                  dlgMessageBox("vertical set to zero");
+                  } 
+               if (vertical == 1) horizontal = 0;
+           } 
+
+*/
+
+        }
+     dlgStretch(0);
+
+      dlgLabel("Increment in mils");
+      dlgSpacing(5);
+      dlgStretch(0);
+      dlgHBoxLayout {
+         dlgIntEdit(dlgIncrement, 0, 10000);
+         }
+      dlgSpacing(10);
+
+      dlgStretch(1);
+      }
+     
+        dlgHBoxLayout {
+          
+           dlgStretch(0);
+           dlgPushButton("+OK") dlgAccept(1);
+           dlgStretch(1);
+           
+        
+           dlgSpacing(20);
+           dlgStretch(0);
+           dlgPushButton("-CANCEL") dlgReject(-1);
+           dlgStretch(1);
+           }
+
+   dlgStretch(1);
+  };
+
+if (Result == -1){
+//tools/align.ulp;    // run the ULP - still need to parse out flags
+exit (0);
+}
+
+// dialog box ends here
+
 int isMatch(string s, string test, int useRegex)
 {
 	string regex = !useRegex ?  "^" : test;
@@ -143,7 +237,7 @@ real input2u(UL_BOARD brd, real inputValue)
 
 
 
-// Liste nach den Koordinatien sortieren, um ursprüngliche Reihenfolge beizubehalten
+// Liste nach den Koordinatien sortieren, um ursprÃ¼ngliche Reihenfolge beizubehalten
 int SortPartList (UL_BOARD brd, int nEls, int DirIsX, int reverse)
 {
     real coord[], c;
@@ -193,6 +287,17 @@ int SortPartList (UL_BOARD brd, int nEls, int DirIsX, int reverse)
 if (!board && !dlgMessageBox("Can only be used in the board editor.\n")) exit(1);
 if (EAGLE_VERSION < 6 && !dlgMessageBox("Requires Eagle v5.7 or later.\n")) exit(1);
 
+ // parse out dialog box attributes   //PAB
+		if (distribute) distributeFlag = true;
+		if (dlgRegEx) regexFlag = true;
+		if (grid) { alignToGridFlag = true; alignToComponentFlag = false; }
+		if (horizontal) alignOnHorizontalLine = true;
+		if (keepInOrder) keepFlag = true;
+		if (dlgIncrement) incrementFlag = true;
+		if (alignToObject){ alignToObjectFlag = true; alignToComponentFlag = false; }
+		if (snap) snapFlag = true;
+		if (vertical) alignOnVerticalLine = true;
+
 if (argc>firstInList)
 {
 	string flags = argv[firstInList];
@@ -200,7 +305,7 @@ if (argc>firstInList)
 	{
 		if (strlen(flags) == 1) { dlgMessageBox("No flags.\n"); exit(1); }
 		for (int i = 1; flags[i]; i++)
-		{
+		{			
 			switch (flags[i])
 			{
 				case 'c' : alignToComponentFlag = true; break;

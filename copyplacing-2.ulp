@@ -1,0 +1,179 @@
+#usage "<b>Copies placement of parts</b><br>"
+       "Open ulp for further information!<br>"
+       "Save board before use!<br>"
+       "<br>"
+       "Version 2 alpha<br>"
+       "<br>"
+       "Features corrected/added by Salvatore Previti - 01-12-2007:"
+       "- Now mirror, spin and all degree angles are fully supported<br>"
+       "- Now multiple source/destination rectangle are fully supported."
+       "You can define multiple sources that will all be copied at once in all destination rectangles you place."
+       "Note: destination rectangle should be enough big to contains all source rectangles (with spaces).<br>"
+       "- Now this ULP works with different grid sizes other than mil. Script is generated using user grid size. Choose mil if you prefer.<br>"
+       "- Now MOVE and ROTATE commands use names instead of coordinates<br>"
+       "- Improved search engine to reduce the risk of failure or error<br>"
+       "<author>Jörg Krein / Salvatore Previti (www.salvatorepreviti.it)</author>"
+
+// This ulp copies the placement of a selected group of parts to another.
+// Draw an rectangle on layer 6 arround the group of properly arranged parts.
+// Then draw an rectangle on layer 7 arround the parts which should be placed
+// the same way. You can do this for more than one target group.
+// Run the ulp, run the script.
+// The grid has to be small enough to allow this!
+// The groups have to consist of the same number and types of elements.
+// The numbering has to be in the same manner.
+// This depends on the behavior of the builtin elements() loop,
+// returning elements in an alphanumerical order. So position and angle
+// of U1 an U2 in the source rectangle will be copied to U10 and U11 in
+// the target rectangle. This seems to work most times but not always!
+// This has to be optimized in many ways. Do it if you like.
+// No warranty whatsoever!
+// Use at own risk!
+
+int tCopyFrom= 6;		// Layer# of rect marking source parts
+int tCopyTo= 7;			// Layer# of rect marking target parts
+
+UL_ELEMENT sourceE;		// Temporary variable to store source element
+
+int slen;				// length of source list
+UL_ELEMENT source[];	// list of all source elements
+int sourceUsedByRect[];		// Temporary array to store the last destination rectangle index that used the given source element
+
+int idx = 0;			// index counter
+
+int gridunit;			// keep the used grid unit
+
+int sourceOX, sourceOY; // source origin coordinate for move
+int newX, newY;			// new element coordinate
+
+int destRectIdx;		// Index of current destination rectangle
+
+// Convert unity to mic, mm, mil or inch using board grid settings.
+real u2u(int val) {
+  switch (gridunit) {
+    case GRID_UNIT_MIC  : return u2mic(val);
+    case GRID_UNIT_MM   : return u2mm(val);
+    case GRID_UNIT_MIL  : return u2mil(val);
+    case GRID_UNIT_INCH : return u2inch(val);
+  }
+}
+
+string Path = "", BName;
+
+// Function that check if two packages may be considered the same
+int equalsPackages(UL_PACKAGE a, UL_PACKAGE b)
+{
+	return a.name == b.name && a.library == b.library;
+}
+
+// Loop through source[] list to see if exists an element that may be used as destination.
+// This function is far to be perfect and need big improvements and research!
+int findBestSource(UL_ELEMENT dst, int excludeUsedByRectIndex)
+{
+	int i, j;
+	UL_ELEMENT src;
+	
+	for (i = 0; i < slen; ++i)
+	{
+		// Exclude elements already used
+		if (excludeUsedByRectIndex >= 0 && sourceUsedByRect[i] == excludeUsedByRectIndex)
+			continue;
+			
+		src = source[i];
+
+		// TODO: should we check names with a "starts with"-like function?
+
+		// check package and value.
+		if (dst.value == src.value && equalsPackages(src.package, dst.package))
+		{
+			// TODO: to be sure we are selecting the right element we should do some kind of connections check...
+			// Quite complex graph math :) Doh!
+			return i;
+		}
+	}
+	
+	return -1; // Not found!
+}
+
+board(B)
+{
+	gridunit = (B.grid.unit); // store the used grid unit
+
+	// loop through all rects and collect all the sources
+	B.rectangles(R)
+	{
+		// looking for rect in source layer
+		if (R.layer == tCopyFrom)
+   		{
+   			// loop through board elements
+			B.elements(E)
+			{
+				if ( (E.x >= R.x1) && (E.x <= R.x2) &&		// look for elements
+					  (E.y >= R.y1) && (E.y <= R.y2) )		// inside the source rect
+				{
+					// reset sourceUsedByRect
+					sourceUsedByRect[slen] = -1;
+
+					if (slen == 0 || R.x1 < sourceOX)
+						sourceOX = R.x1; // Store leftmost X
+
+					if (slen == 0 || R.y1 < sourceOY)
+						sourceOY = R.y1; // Store topmost Y
+
+					// store the source element
+					source[slen++] = E;
+				}
+         	} // elements
+		}
+	} // rectangles
+
+	// get project path
+	BName = B.name;
+	Path = filedir( BName );
+
+	// Create output file
+	output( Path + "copyplacing.scr", "wt")
+	{
+		// loop through all rects and write commands
+		B.rectangles(R)
+		{
+			// looking for a rect in target layer
+			if (R.layer == tCopyTo)
+	   		{
+	   			printf("# destination rectangle %d\n\n", destRectIdx);
+
+				// loop through board elements
+				B.elements(destE)
+				{
+					if ( (destE.x >= R.x1) && (destE.x <= R.x2) &&	// look for elements
+						  (destE.y >= R.y1) && (destE.y <= R.y2) )	// inside the target rect
+		   			{
+						// Find best source for the given destination element
+						idx = findBestSource(destE, destRectIdx);
+	
+						if (idx >= 0) // Element found.
+						{
+							sourceUsedByRect[idx] = destRectIdx;	// Mark the element as used
+							sourceE = source[idx];					// Source element
+
+				     		if (sourceE.angle != destE.angle || sourceE.mirror != destE.mirror || sourceE.spin != destE.spin)
+				     		{
+				     		    // Add the rotate/mirror command
+								printf( "ROTATE =%s%sR%f %s;\n", sourceE.spin ? "S" : "", sourceE.mirror ? "M" : "", sourceE.angle, destE.name);
+							}
+
+							newX = sourceE.x - sourceOX + R.x1;
+							newY = sourceE.y - sourceOY + R.y1;
+
+				     		// add the move command
+				     		printf("MOVE %s (%f %f);\n", destE.name, u2u(newX), u2u(newY));
+			     		}
+			     	}
+				} // elements
+				
+				++destRectIdx; // Increase destination rectangle index
+			}
+		} // rectangles
+	} // output
+} // board
+

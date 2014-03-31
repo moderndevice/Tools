@@ -1,0 +1,1103 @@
+#usage "<b>Library Merge</b><p>\n"
+ "It is suggested you make a copy of your destination library for"
+ " experimenting before using this the first time. It will irreversably combine"
+ " two libraries into one."
+ " For more information open the ULP in the text editor and read the header, or look at the help file. "	
+ " This ULP will copy packages, symbols, and/or devices from one library to another. "
+ "The user must run this ULP with the destination library open. It will then copy "
+ "all of the symbols/packages/devices to a temporary file and then open the source "
+ "library. It will list all of the symbols/packages/devices in the source library "
+ "that don't have an identical name in the destination. The user can select any or "
+ "all of the devices and then hit copy. The ULP will then generate a export file of "
+ "those devices. It will re-open the destination library and import them. "
+ "<author>Jim Thurman tlj@pcez.com </author>"  					//He isn't at this address anymore, so don't email him there
+
+////////////////////////////////////////////////////////////////////////////////
+/* Updates Section  -Developers and trouble-shooters readme!!!
+---------------------------------------------------------------------------------------
+  Updated January 2010
+  ver 5.7 	
+
+		updated Joshua White @ JWHITE@Neuronetrix.com  Don't BUG ME unless you have
+    		spent at least a week on the problem try the DEBUG variable, troubleshooting is par 
+		for using eagle.
+		If you want to learn ULP the eagle help file has all the constants, functions, etc
+		if you do waste my time with an email, you had better send an email that has 
+		version # operating system, etc, etc.  I don't get paid to answer email, I 
+		get paid to do Neuroresearch.  HMMPH
+
+		Check out Neuronetrix.com  we are AWESOME!
+
+
+------------------------------------------------------------------------------------
+Tested on:
+		(fill in tested systems here)
+		 Windows 7 Ultimate x64
+------------------------------------------------------------------------------------
+	Known Bugs -
+		1/22/2010 Pathsnames cannot contain spaces.....Yet!
+			Exit command does not work with path names with spaces.  If you want this fixed
+			send an email to cadsoft marked to: developers with your vote to fix the exit command's 
+			pathproblem with spaces.
+		
+	
+	Error Messages
+	1/22/2010 Windows 7 and Vista have permission settings and access limitations to some locations (such as the root
+			directory.  Currently there is no specific error that tell the user what the problem is.  The program just
+			errors out.
+	1/22/2010 If a users is trying to merge libraries that have components that exceed his/her license then an error occurs.  	
+
+
+
+-----------------------------------------
+	Fixes -
+  		1/22/2010 Fixed s.description on line 7xx  (this doesn't exist and so it caused the program to error out
+ 		1/22/2010 Fixed workpath names and variables, now you can use the program and everything doesn't have to be
+    			in the same folder	
+		1/22/2010 Temp files and temp data are deleted when eagle exits.
+  
+  	This program looks to have been pieced together from many other programs, so don't
+  		be suprised if lines of code don't do anything, troubleshooting is par for the course.
+
+
+*/
+//////////////////////////////////////////////////////////////////////////////////////////////	
+
+
+string HelpText =
+ "It is suggested you make a copy of your destination library for"
+ "experimenting before using this the first time. It will irreversably combine"
+ "two libraries into one."
+ "This ULP will copy packages, symbols, and/or devices from one library to another. "
+ "The user must run this ULP with the destination library open. It will then copy "
+ "all of the symbols/packages/devices to a temporary file and then open the source "
+ "library. It will list all of the symbols/packages/devices in the source library "
+ "that don't have an identical name in the destination. The user can select any or "
+ "all of the devices and then hit copy. The ULP will then generate a export file of "
+ "those devices. It will re-open the destination library and import them. It checks "
+ "each device selected to be certain that symbols and packages that are a part of that "
+ "device are in the destination library or selected from the source. If not it gives "
+ "the user the opportunity to copy these symbol/packages as well. If you select the "
+ "same library for source as the one already open (destination) the list of "
+ "symbol/package/devices will be empty as they all match. If you terminate the ULP "
+ "by quiting the dialog box you will have the <b>source library open, not the original "
+ "destination.</b>"
+ "<\p>"
+ "This program can generate an export script of all or part of any library enabling " 
+ "the possibility of selecting some symbol/package/devices from one or more libraries "
+ "to generate a completely new one. Not every possible object in a library is handled "
+ "at present but it does a good job of duplicating the libraries I tried. "
+ "<\p>"
+ "This program came from 'lbr_man_1_2.ulp' which seemed to want to do a similar thing "
+ "but didn't have the script export function done. Oppologies in advance if I find myself "
+ "without sufficient time to finish documenting the program and just upload it. "
+ "<\p>"
+ "NOTE: this program generates 1 temporary script file (Temp_1.scr) when the source library "
+ "is selected and another when the copy button is pushed (Temp_2.scr). Also the file "
+ "'DestLibData.tmp' which contains the names of the symbols, packages, and device sets in "
+ "the destination library."
+;
+
+int DEBUG = 0;						// Debug levels,  = 1 it troubleshoots path names
+
+
+int CurrentLayer;						// last layer command written out so won't be duplicated in output
+int CurrentStyle;						// last line style written out
+int CurrentFont;						// last font
+int CurrentRatio;						// last ratio
+real CurrentSize;						// last text size
+real CurrentDrill;					// last drill size
+
+int ListElement;						// number of elements in display list
+int DstPackageNum,DstSymbolNum,DstDeviceNum;			// number of elements in destination symbol/package/device arrays
+int SrcPackageNum,SrcSymbolNum,SrcDeviceNum;			// number of elements in source symbol/package/device arrays
+string DstPackage[],DstSymbol[],DstDevice[];			// destination library symbol/package/device names
+string SrcPackage[],SrcSymbol[],SrcDevice[];			// source library symbol/package/device names
+string List[];						// displayed list
+
+//******************************************************************************************************
+// writes out the help box
+//******************************************************************************************************
+void DisplayHelp(void) {
+	dlgDialog("Library Merge Help") {
+		dlgHBoxLayout dlgSpacing(400);
+		dlgHBoxLayout {
+			dlgVBoxLayout dlgSpacing(300);
+			dlgTextView(HelpText);
+ 		}
+ 		dlgHBoxLayout {
+ 			dlgStretch(1);
+ 			dlgPushButton("-Close") dlgReject();
+ 		}
+ 	};
+}
+//******************************************************************************************************
+// get file path of any file open.
+//******************************************************************************************************
+string get_project_path() {
+string workpath;
+ if (board)	board(B)		return(filedir(B.name));	//This function is for libraries only
+ if (schematic)	schematic(B)	return(filedir(B.name));	//This function is for libraries only
+ if (library)	library(B)          workpath = B.name;
+
+ if (DEBUG == 1)	dlgMessageBox(workpath,"library path"); 	// display the variable
+ if (library)	library(B)	return(filedir(B.name));
+}
+//******************************************************************************************************
+// right trim string of spaces
+//******************************************************************************************************
+string StrRTrim(string Str) {
+	int x;
+	x=strlen(Str)-1;
+	while ((x>=0) && (Str[x]==' ')) {
+		Str[x--]=0;
+	}
+	return(Str);
+}
+//**************************************************************************************************
+// turn all last script output values off
+//**************************************************************************************************
+void ResetGlobals(void) {
+	CurrentLayer=-1;						// no last layer sent
+	CurrentStyle=-1;						// no last line style
+	CurrentSize=-1;						// no last text size
+	CurrentFont=-1;						// no last font
+	CurrentRatio=-1;						// no last ratio
+	CurrentDrill=-1;						// no last drill size
+}
+//**************************************************************************************************
+// If new layer not the current one, then change.
+//**************************************************************************************************
+void ChangeLayer(int NewLayer) {
+	if (NewLayer!=CurrentLayer) {
+		CurrentLayer=NewLayer;
+		printf("Layer %d;\n",NewLayer);
+	}
+}
+//**************************************************************************************************
+// If the new drill size is different then the current one then change.
+//**************************************************************************************************
+void ChangeDrill(real NewDrill) {
+	if (NewDrill!=CurrentDrill) {
+		CurrentDrill=NewDrill;
+		printf("Change Drill %f;\n",CurrentDrill);
+	}
+}
+//**************************************************************************************************
+// The wire styles are stored as numbers by are written as text for scripts
+//**************************************************************************************************
+string WireStyleToText(int style) {
+	string str1;
+	switch (style) {
+		case WIRE_STYLE_CONTINUOUS: 		str1="continuous";		break;
+		case WIRE_STYLE_LONGDASH:	  	str1="longdash";		break;
+		case WIRE_STYLE_SHORTDASH:  		str1="shortdash";		break;
+		case WIRE_STYLE_DASHDOT:		str1="dashdot";		break;		
+		default: 				str1="*INVALID";		break;
+	}
+	return(str1);
+}
+//**************************************************************************************************
+// If the wire style is different then the current one then change
+//**************************************************************************************************
+void ChangeStyle(int NewStyle) {
+	if (NewStyle!=CurrentStyle) {
+		CurrentStyle=NewStyle;
+		printf("Change Style %s;\n",WireStyleToText(NewStyle));
+	}
+}
+//**************************************************************************************************
+// If the new text size is different than the current one, change.
+//**************************************************************************************************
+void ChangeSize(real NewSize) {
+	if (NewSize!=CurrentSize) {
+		CurrentSize=NewSize;
+		printf("Change Size %f;\n",NewSize);
+	}
+}
+//**************************************************************************************************
+// If the new text ratio is different than current, change.
+//**************************************************************************************************
+void CheckRatio(int NewRatio) {
+	if (NewRatio!=CurrentRatio) {
+		CurrentRatio=NewRatio;
+		printf("Change Ratio %d;\n",NewRatio);
+	}
+}
+//**************************************************************************************************
+// Font codes are numberic internally but text in scripts
+//**************************************************************************************************
+string FontToText(int font) {
+	string str1;
+	switch(font) {
+		case FONT_VECTOR: 		str1="Vector"; 		break;
+		case FONT_PROPORTIONAL:	str1="Proportional";	break;
+		case FONT_FIXED:		str1="Fixed";		break;
+	}
+	return(str1);
+}
+//**************************************************************************************************
+// if the new font is different than change it.
+//**************************************************************************************************
+void CheckFont(int NewFont) {
+	if (NewFont!=CurrentFont) {
+		CurrentFont=NewFont;
+		printf("Change Font %s;\n",FontToText(NewFont));
+	}
+}
+//**************************************************************************************************
+// convert the numeric pad shape code to text
+//**************************************************************************************************
+string PadShapeToText(int PadShape) {
+	string str1;
+
+	switch(PadShape) {
+		case PAD_SHAPE_SQUARE:	str1="Square"; 	break;
+		case PAD_SHAPE_ROUND:	str1="Round"; 	break;
+		case PAD_SHAPE_OCTAGON:	str1="Octagon"; 	break;
+		case PAD_SHAPE_LONG:	str1="Long"; 	break;
+		case PAD_SHAPE_OFFSET:	str1="Offset"; 	break;
+		case PAD_SHAPE_ANNULUS: 	str1="Annulus"; 	break; // (only if supply layers are used)
+		case PAD_SHAPE_THERMAL: 	str1="Thermal"; 	break; // (only if supply layers are used)
+		default: 			str1="INVALID"; 	break;
+	}
+	return(str1);
+}
+//**************************************************************************************************
+// generate a text equivelent of the angle information
+//**************************************************************************************************
+string AngleToText(real f,int MirrorFlag,int SpinFlag) {
+	int i;
+	string str1,str2,str3;
+
+	i=f;
+	if (SpinFlag) str1="S";
+	else str1="";
+	if (MirrorFlag) str2="M";
+	else str2="";
+	sprintf(str3,"%s%sR%d",str1,str2,i);
+	return(str3);
+}
+//**************************************************************************************************
+// print the script information related to a pad
+//**************************************************************************************************
+void PrintPad(UL_PAD Pad1,int layer1) {
+	real d,x,y,drill;
+
+	d=Pad1.diameter[layer1];
+	d=d/10000;
+	x=Pad1.x;
+	y=Pad1.y;
+	x=x/10000;
+	y=y/10000;
+	drill=Pad1.drill;
+	drill=drill/10000;
+	ChangeDrill(drill);
+	printf("Pad '%s' %s %f (%f %f);\n",Pad1.name,PadShapeToText(Pad1.shape[layer1]),d,x,y);
+}
+//**************************************************************************************************
+// print the script information related for a smd
+//**************************************************************************************************
+void PrintSmd(UL_SMD Smd,int layer1) {
+	real dx,dy,x,y;
+	string flagstr;
+
+	dx=Smd.dx[Smd.layer];
+	dy=Smd.dy[Smd.layer];
+	dx=dx/10000;
+	dy=dy/10000;
+	x=Smd.x;
+	y=Smd.y;
+	x=x/10000;
+	y=y/10000;
+	flagstr="";
+	if ((Smd.flags & SMD_FLAG_STOP)==0) flagstr=flagstr+"NOSTOP ";
+	if ((Smd.flags & SMD_FLAG_THERMALS)==0) flagstr=flagstr+"NOTHERMALS ";
+	if ((Smd.flags & SMD_FLAG_CREAM)==0) flagstr=flagstr+"NOCREAM";
+	ChangeLayer(Smd.layer);
+	printf("Smd '%s' %f %f -%d R%f %s (%f %f);\n",Smd.name,dx,dy,Smd.roundness,Smd.angle,flagstr,x,y);
+}
+//**************************************************************************************************
+// print the script information related for a contact which can be a pad or smd
+//**************************************************************************************************
+void PrintContact(UL_CONTACT Cont) {
+	if (Cont.pad) PrintPad(Cont.pad,LAYER_PADS);
+	if (Cont.smd) PrintSmd(Cont.smd,LAYER_TOP);
+}
+//**************************************************************************************************
+// convert the direction code to script text
+//**************************************************************************************************
+string DirectionToText(int dir) {
+	string str1;
+
+	switch (dir) {
+		case PIN_DIRECTION_NC: 	str1="NC"; 	break;
+		case PIN_DIRECTION_IN: 	str1="In";	break;
+		case PIN_DIRECTION_OUT:	str1="Out"; 	break;
+		case PIN_DIRECTION_IO:	str1="I/O"; 	break;
+		case PIN_DIRECTION_OC:	str1="OC";	break;
+		case PIN_DIRECTION_PWR:	str1="Pwr";	break;
+		case PIN_DIRECTION_PAS: 	str1="Pas";	break;
+		case PIN_DIRECTION_HIZ:	str1="Hiz";	break;
+		case PIN_DIRECTION_SUP:	str1="Sup";	break;
+	}
+	return(str1);
+}
+//**************************************************************************************************
+// convert the function code to text
+//**************************************************************************************************
+string FunctionToText(int fun) {
+	string str1;
+
+	switch (fun) {
+		case PIN_FUNCTION_FLAG_NONE: 	str1="None"; 	break;
+		case PIN_FUNCTION_FLAG_DOT: 	str1="Dot";	break;
+		case PIN_FUNCTION_FLAG_CLK:	str1="Clk"; 	break;
+	}
+	return(str1);
+}
+//**************************************************************************************************
+// convert pin length code to text
+//**************************************************************************************************
+string PinLengthToText(int fun) {
+	string str1;
+
+	switch (fun) {
+		case PIN_LENGTH_POINT: 	str1="Point"; 	break;
+		case PIN_LENGTH_SHORT: 	str1="Short";	break;
+		case PIN_LENGTH_MIDDLE:	str1="Middle"; 	break;
+		case PIN_LENGTH_LONG:   	str1="Long";	break;
+	}
+	return(str1);
+}
+//**************************************************************************************************
+// convert the pad/pin visible flags to text
+//**************************************************************************************************
+string PinVisibleToText(int PinVisibleFlag) {
+	string str1;
+
+	if (PinVisibleFlag & PIN_VISIBLE_FLAG_PAD) {
+		if (PinVisibleFlag & PIN_VISIBLE_FLAG_PIN) str1="Both";
+		else str1="Pad";
+	} else {
+		if (PinVisibleFlag & PIN_VISIBLE_FLAG_PIN) str1="Pin";
+		else str1="Off";		
+	}
+	return(str1);
+}
+//**************************************************************************************************
+// convert a name to a form that can be written out (no spaces or single quotes by themselves.
+//**************************************************************************************************
+string CheckName(string name) {
+	int x;
+	string str1;
+
+	str1=name;
+	x=0;
+	while (x>=0) {
+		x=strchr(str1,'\'',x);
+		if (x>=0) {
+			str1=strsub(str1,0,x+1)+"\'"+strsub(str1,x+1,strlen(str1)-x-1);
+			x=x+2;
+			if (x>=strlen(str1)) x=-1;
+		} else {
+			x=strchr(str1,' ',0);
+			if (x>=0) {
+				str1=strsub(str1,0,x)+"_*_"+strsub(str1,x+1,strlen(str1)-x);
+				x=x+4;
+				if (x>=strlen(str1)) x=-1;
+			}
+		}
+	}
+	return(str1);
+}
+//**************************************************************************************************
+// remove carriage returns from string and replace with 'continute line'.
+//**************************************************************************************************
+string DescriptionToPrint(string desc) {
+	int x;
+	string str1;
+
+	str1=desc;
+	x=0;
+	while (x>=0) {
+		x=strchr(str1,'\n',x);	
+		if (x>=0) {
+			str1=strsub(str1,0,x)+"\\"+strsub(str1,x,strlen(str1)-x);
+			x=x+2;
+			if (x>=strlen(str1)) x=-1;
+		}
+	}
+	return(str1);
+}
+//**************************************************************************************************
+// replace carriage return or tab with space.
+//**************************************************************************************************
+string DescriptionToDisplay(string desc,int maxlen) {
+	int x;
+	string str1;
+
+	str1=desc;
+	if (strlen(str1)>maxlen) str1[maxlen-1]=0;
+	x=0;
+	while (x>=0) {
+		x=strchr(str1,'\n',x);	
+		if (x>=0) {
+			str1[x]=' ';
+		}
+		x=strchr(str1,'\t',x);
+		if (x>=0) {
+			str1[x]=' ';
+		}
+	}
+	return(str1);
+}
+//**************************************************************************************************
+// print the script command for pin generation
+//**************************************************************************************************
+void PrintPin(UL_PIN Pin) {
+	real x,y;
+	x=Pin.x;
+	y=Pin.y;
+	x=x/10000;
+	y=y/10000;
+	printf("Pin '%s' %s %s %s %s %s %d (%f %f);\n",CheckName(Pin.name),DirectionToText(Pin.direction),FunctionToText(Pin.function),
+		PinLengthToText(Pin.length),AngleToText(Pin.angle,0,0),PinVisibleToText(Pin.visible),Pin.swaplevel,x, y);
+}
+//**************************************************************************************************
+// print the script information associated with a 'Area' data element
+//**************************************************************************************************
+void PrintArea(UL_AREA Area) {
+	printf("Area: (%d %d), (%d %d)\n",Area.x1, Area.y1, Area.x2, Area.y2);  
+}
+//**************************************************************************************************
+// print the script information associated with a 'Circle' data element
+//**************************************************************************************************
+void PrintCircles(UL_CIRCLE Circle) {
+	ChangeLayer(Circle.layer);
+	printf("Circle %d (%d %d) (%d 0);\n", Circle.width,Circle.x, Circle.y, Circle.radius);
+}
+//**************************************************************************************************
+// print the script information associated with a 'Rectangle' data element
+//**************************************************************************************************
+void PrintRectangle(UL_RECTANGLE Rect) {
+	real x1,y1,x2,y2;
+
+	ChangeLayer(Rect.layer);
+	x1=Rect.x1;
+	y1=Rect.y1;
+	x2=Rect.x2;
+	y2=Rect.y2;
+	x1=x1/10000;
+	y1=y1/10000;
+	x2=x2/10000;
+	y2=y2/10000;
+	printf("Rect %s (%f %f) (%f %f);\n",AngleToText(Rect.angle,0,0),x1,y1,x2,y2);
+}
+//**************************************************************************************************
+// convert arc cap code to text
+//**************************************************************************************************
+string CapToText(int cap) {
+	string str1;
+
+	switch (cap) {
+		case CAP_FLAT:  str1="Flat"; 	break;
+		case CAP_ROUND: str1="Round"; break;
+		default: str1=""; break;
+	}
+	return(str1);
+}
+//**************************************************************************************************
+// print script data related to an arc
+//**************************************************************************************************
+void PrintArc(UL_ARC Arc) {
+	ChangeLayer(Arc.layer);
+	printf("Arc: %f %f %s %d %d (%d %d) (%d %d) (%d %d)\n",Arc.angle1,Arc.angle2,CapToText(Arc.cap),Arc.radius,
+		Arc.width,Arc.x1,Arc.y1,Arc.x2,Arc.y2,Arc.xc,Arc.yc);
+}
+//**************************************************************************************************
+// print script data related to a wire segment
+//**************************************************************************************************
+void PrintOneWire(UL_WIRE Wire) {
+	printf("Wire: %d %f %d %d %d (%d %d) (%d %d)\n",Wire.cap,Wire.curve,Wire.layer,Wire.style,Wire.width,
+		Wire.x1,Wire.y1,Wire.x2,Wire.y2);
+//	if (Wire.arc) PrintArc(Wire.arc);
+}
+//**************************************************************************************************
+// print script data related to an wire
+//**************************************************************************************************
+void PrintWire(UL_WIRE Wire) {
+	string str1;
+	real f,x1,y1,x2,y2;
+
+	ChangeLayer(Wire.layer);
+	ChangeStyle(Wire.style);
+	f=Wire.width;
+	f=f/10000;
+	x1=Wire.x1;
+	y1=Wire.y1;
+	x2=Wire.x2;
+	y2=Wire.y2;
+	x1=x1/10000;
+	y1=y1/10000;
+	x2=x2/10000;
+	y2=y2/10000;
+	printf("Wire %f (%f %f) %s %+f  (%f %f);\n",f,x1,y1,CapToText(Wire.cap),Wire.curve,x2,y2);
+	Wire.pieces(piece) {
+	}
+}
+//**************************************************************************************************
+// print script data related to an polygon
+//**************************************************************************************************
+void PrintPolygon(UL_POLYGON Poly) {
+	real w;
+
+	w=Poly.width;
+	w=w/10000;
+	ChangeLayer(Poly.layer);
+	printf("Polygon  %f;\n",w);
+	Poly.contours(Conts) {
+		PrintWire(Conts);
+	}
+	Poly.fillings(Fills) {
+		PrintWire(Fills);
+	}
+	Poly.wires(wires) {
+		PrintWire(wires);
+	}
+}
+//**************************************************************************************************
+// print script data related to text
+//**************************************************************************************************
+void PrintText(UL_TEXT Text1) {
+	real f,x,y;
+
+	ChangeLayer(Text1.layer);
+	f=Text1.size;
+	f=f/10000;
+	ChangeSize(f);
+	CheckRatio(Text1.ratio);
+	CheckFont(Text1.font);
+	x=Text1.x;
+	y=Text1.y;
+	x=x/10000;
+	y=y/10000;
+	printf("Text '%s' %s (%f %f);\n",Text1.value,AngleToText(Text1.angle,Text1.mirror,Text1.spin),x,y);
+ }	
+//**************************************************************************************************
+//**************************************************************************************************
+void PrintCircle(UL_CIRCLE Circle) {
+}
+//**************************************************************************************************
+// print script data related to a hole
+//**************************************************************************************************
+void PrintHole(UL_HOLE Hole,int layer) {
+	real drill;
+
+	drill=Hole.drill;
+	drill=drill/10000;
+	ChangeDrill(drill);
+}
+//**************************************************************************************************
+// print all script data defining a package
+//**************************************************************************************************
+void PrintPackage(UL_PACKAGE Package) {
+	printf("Edit %s.pac;\n",CheckName(Package.name));
+	printf("Description '%s';\n",DescriptionToPrint(Package.description));
+	Package.holes(hole) {
+		PrintHole(hole,LAYER_TSTOP);
+	}
+	Package.circles(circle) {
+		PrintCircle(circle);
+	}
+	Package.contacts(contact) {
+		PrintContact(contact);
+	}
+	Package.polygons(polygon) {
+		PrintPolygon(polygon);
+	}
+	Package.rectangles(rectangle) {
+		PrintRectangle(rectangle);
+	}
+	Package.texts(text) {
+		PrintText(text);
+	}
+	Package.wires(wire) {
+		PrintWire(wire);
+	}
+}
+//**************************************************************************************************
+// change layer number
+//**************************************************************************************************
+void PrintLayer(UL_LAYER Layer) {
+	printf("Layer %d %s;\n",Layer.number,Layer.name);
+}
+//**************************************************************************************************
+// print all script data defining a sumbol
+//**************************************************************************************************
+void PrintSymbol(UL_SYMBOL Symbol) {
+	printf("Edit %s.sym;\n",CheckName(Symbol.name));
+	Symbol.circles(circle) {
+		PrintCircle(circle);
+	}
+	Symbol.rectangles(rect) {
+		PrintRectangle(rect);
+	}
+	Symbol.pins(pin) {
+		PrintPin(pin);
+	}
+	Symbol.polygons(poly) {
+		PrintPolygon(poly);
+	}
+	Symbol.texts(text) {
+		PrintText(text);
+	}
+	Symbol.wires(wire) {
+		PrintWire(wire);
+	}
+}
+//**************************************************************************************************
+// convert add level code to text
+//**************************************************************************************************
+string AddLevelToText(int AddLevel) {
+	string str1;
+
+	switch(AddLevel) {
+		case GATE_ADDLEVEL_MUST: 		str1="Must";		break;
+		case GATE_ADDLEVEL_CAN:		str1="Can";		break;
+		case GATE_ADDLEVEL_NEXT:		str1="Next"; 		break;
+		case GATE_ADDLEVEL_REQUEST:		str1="Request"; 		break;
+		case GATE_ADDLEVEL_ALWAYS:		str1="Always";		break;
+		default: 				str1="INVALID"; 	break;
+	}
+	return(str1);
+}
+//**************************************************************************************************
+// print script form of gate definition
+//**************************************************************************************************
+void PrintGate(UL_GATE Gate,string devname) {
+	real x,y;
+	
+	x=Gate.x;
+	y=Gate.y;
+	x=x/10000;
+	y=y/10000;
+	printf("Add %s '%s' %s %d (%f %f);\n",devname,Gate.name,AddLevelToText(Gate.addlevel),Gate.swaplevel,x,y);
+}
+//**************************************************************************************************
+// print all script data defining a device set
+//**************************************************************************************************
+void PrintDeviceSet(UL_DEVICESET DeviceSet) {
+	int GateNum,Variant;
+	real x,y;
+
+	GateNum=0;
+	printf("Edit %s.dev;\n",CheckName(DeviceSet.name));
+	printf("Prefix '%s';\n",DeviceSet.prefix);
+	printf("Description '%s';\n",DescriptionToPrint(DeviceSet.description));
+	printf("Value %s;\n",DeviceSet.value);
+
+ 
+	DeviceSet.devices(device) {
+		Variant++;
+		if (device.package) {
+			printf("Package '%s' '%s';\n",device.package.name,device.name);
+			printf("Technology %s;\n",device.technologies);
+		}
+		device.gates(gate) {
+			GateNum++;
+			x=gate.x;
+			y=gate.y;
+			x=x/10000;
+			y=y/10000;
+			if (Variant==1) {
+				printf("Add %s '%s' %s %d (%f %f);\n",CheckName(gate.symbol.name),CheckName(gate.name),AddLevelToText(gate.addlevel),gate.swaplevel,x,y);
+ 			}
+			gate.symbol.pins(pin) {
+				if (pin.contact) {
+					printf("Connect '%s.%s' '%s';\n",CheckName(gate.name),CheckName(pin.name),pin.contact.name);
+				}
+				
+			}
+		}	
+	}
+}
+//**************************************************************************************************
+// convert the grid unit code to text
+//**************************************************************************************************
+string GridUnitToString(int GridUnit) {
+	string str1;
+
+	switch(GridUnit) {
+		case GRID_UNIT_MIC: 	str1="mic";	break;
+		case GRID_UNIT_MM:		str1="mm"; 	break;
+		case GRID_UNIT_MIL:		str1="mil";	break;
+		case GRID_UNIT_INCH:	str1="inch";	break;
+		default: 			str1="INVALID";	break;
+	}
+	return(str1);
+}
+//**************************************************************************************************
+// print grid. This is fixed information as the data returned from the library is wrong. Many 
+// dimensions are fixed in millimeters.
+//**************************************************************************************************
+void PrintGrid(UL_GRID Grid) {
+	printf("Grid mm;\n");
+}
+//**************************************************************************************************
+// print all script data defining a library
+//**************************************************************************************************
+void PrintLibrary(UL_LIBRARY Library) {
+	string str1;
+	int Result;
+
+		status("Print Grid");
+		PrintGrid(Library.grid);
+
+		status("     Print Layers");
+		Library.layers(layer) {
+			PrintLayer(layer);
+		} 		
+		printf("Description '%s';\n",DescriptionToPrint(Library.description));
+		status("     Print Symbols");
+		Library.symbols(symbol1) {
+			ResetGlobals();
+			printf("\n");
+			PrintSymbol(symbol1);
+		}
+
+		status("     Print packages");
+		Library.packages(package1) {
+			ResetGlobals();
+			printf("\n");
+			PrintPackage(package1);
+		}
+
+		status("Print Device Sets");
+		Library.devicesets(device_set) {
+			printf("\n");
+			PrintDeviceSet(device_set);
+		}
+
+}
+//**************************************************************************************************
+//**************************************************************************************************
+void ToggleStatus(string ElementType) {
+	int x;
+	string TempAry[];
+
+	for (x=0;x<ListElement;x++) {							// go through whole list
+		strsplit(TempAry,List[x],'\t');					// seperate elements
+		if ((TempAry[1]==ElementType) || (ElementType=="")) {			// is this element one we are looking for?
+			if (strsub(TempAry[0],0,1)!=" ") {				// yes, is it selected
+				List[x]=" "+strsub(List[x],1,strlen(List[x])-1);		// yes, delselect
+			} else {
+				List[x]="*"+strsub(List[x],1,strlen(List[x])-1);		// select
+			}
+		}
+	}
+}
+//**************************************************************************************************
+// look at all selected devices to determine if all associated symbols and packages are in the destination
+// library or selected to be copied from the source. If not, ask the operator if they want to copy
+// the symbol or package from the source.
+//**************************************************************************************************
+void CheckDevice(string DeviceName) {
+	int EndLoop,x,y;
+	string Str1,TempAry[];
+
+	library(SourceLibrary) {
+		SourceLibrary.devicesets(devset) {									// go through all devices sets in library
+			if (devset.name==DeviceName) {								// the name of this one matches a selected device
+				devset.devices(device) {								// go through all devices in this device set
+					if (device.package) {							// this device has a valid package
+						y=0;
+						while ((y<DstPackageNum) && (device.package.name!=DstPackage[y])) y++;	// search for a matching name in the destination library
+						if (device.package.name!=DstPackage[y]) {				// package not found in destination library
+							y=0;
+							EndLoop=0;
+							while ((y<ListElement) && (EndLoop==0)) {			// search through source list for name
+								strsplit(TempAry,List[y],'\t');			// break up source data line name and description
+								if ((TempAry[0]=="*") && (TempAry[1]=="Package")) {	// check for selected package 
+									if (TempAry[2]==device.package.name) EndLoop=1; 	// if this one has same name then package ok
+								} 
+								y++;
+							}
+							if (EndLoop==0) {								// this package isn't in destination library or selected in source
+								sprintf(Str1,"The package:%s attached to device:%s isn't in destination or selected from source. Copy from source?",device.package.name,devset.name);
+								if (dlgMessageBox(Str1,"&Yes", "&No")==0) {				// if yes
+									y=0;
+									EndLoop=0;
+									while ((y<ListElement) && (EndLoop==0)) {			// search through source list
+										strsplit(TempAry,List[y],'\t');			// break up source data line name and description
+										if ((TempAry[0]==" ") && (TempAry[1]=="Package")) { 	// This is a unselected package
+											if (TempAry[2]==device.package.name) EndLoop=1;  	// name matches
+											else y++;
+										} else y++;
+									}
+									if (EndLoop==1) {						// we found the unselected item from the source library
+										List[y]="*"+strsub(List[y],1,strlen(List[y])-1);		// indicate that it is now selected
+									} else {
+										dlgMessageBox("Couldn't find package for some reason"); 	// couldn't find package for some reason
+									}
+								}
+							} 
+						} 
+					}
+					device.gates(gate) {									// search through all gates of this device
+						y=0;
+						while ((y<DstSymbolNum) && (gate.symbol.name!=DstSymbol[y])) y++;				// search destination library
+						if (gate.symbol.name!=DstSymbol[y]) {							// symbol not found in destination library
+							y=0;
+							EndLoop=0;
+							while ((y<ListElement) && (EndLoop==0)) {					// search source list for selected name
+								strsplit(TempAry,List[y],'\t');					// break up source data line name and description
+								if ((TempAry[0]=="*") && (TempAry[1]=="Symbol")) {			// selected symbol
+									if (TempAry[2]==gate.symbol.name) EndLoop=1;			// if names match, exit
+								}
+								y++;
+							}
+							if (EndLoop==0) {								// no symbol in destination or selected in source
+								sprintf(Str1,"The symbol:%s attached to device:%s isn't in destination or selected from source. Copy from source?",gate.symbol.name,devset.name);
+								if (dlgMessageBox(Str1,"&Yes", "&No")==0) {				// yes - reselect symbol
+									y=0;
+									EndLoop=0;
+									while ((y<ListElement) && (EndLoop==0)) {			// search through source list for unselected name
+										strsplit(TempAry,List[y],'\t');			// break up source data line name and description
+										if ((TempAry[0]==" ") && (TempAry[1]=="Symbol")) {			// found symbol name
+											if (TempAry[2]==gate.symbol.name) EndLoop=1;
+											else y++;
+										} else y++;
+									}
+									if (EndLoop==1) {						// unselected symbol name found, select
+										List[y]="*"+strsub(List[y],1,strlen(List[y])-1);
+									} else {
+										dlgMessageBox("Couldn't find symbol for some reason");
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+//**************************************************************************************************
+// This program assumes that a library is open and it is the destination library. Since a ULP can't 
+// open and close libraries arbitraritly, the program uses the 'exit' function with a parameter of 
+// the next ULP to run. It creates temporary ULP's the open the source library and then activate the
+// script it generates
+//**************************************************************************************************
+int NotFound;
+string TempStr;
+int x,y,n;
+int Length;
+int RunNum;
+string ProgName;
+string FileInData[];
+string TempAry[];
+string FirstArgument;
+string Str1,Str2,Str3;
+string EditName;
+string SourceFileName;
+string WorkPath;				
+string SourcePath;			
+string DestinationFileName;
+int selected;				// Determines whether the s/p/d is selected on the dialog copy list.
+
+ProgName=argv[0];				// name of this program
+WorkPath = get_project_path();		// path for temp file
+if (DEBUG == 1) dlgMessageBox(WorkPath,"mainstart"); 		// display the variable
+x=strchr(WorkPath,':');			// get colon
+//if (x>0) WorkPath=strsub(WorkPath,0,x+2);	// if there is a colon then this is just the drive and root '\'
+FirstArgument="";
+if (argc>0) FirstArgument=argv[1];		// run number argument, if any
+
+RunNum=strtol(FirstArgument);
+switch(RunNum) {
+
+	case 0:													// first iteration
+		if (library) {											// check to see if a library file is open, else error and exit
+			library(DestLibrary) {									// assign a variable to this library
+				EditName=filename(DestLibrary.name); 							// name of loaded library w/o path
+				EditName=WorkPath+EditName;
+				output(WorkPath+"DestLibData.tmp", "wtD") {						// create a temporary file of this library
+					DestLibrary.symbols(S) printf("S\t%s\n",StrRTrim(S.name)/*,StrRTrim(S.description)*/);	// write out all symbol names
+					DestLibrary.packages(P) printf("P\t%s\n",StrRTrim(P.name)/*,StrRTrim(P.description)*/);  	// write out all packages names
+					DestLibrary.devicesets(D) printf("D\t%s\n",StrRTrim(D.name)/*,StrRTrim(D.description)*/);	// write out all device names
+				}
+			};
+			SourceFileName = dlgFileOpen("Select source library", WorkPath, "*.lbr"); 				// activate the dialog box to select the source library
+			if (SourceFileName != "") {
+				SourcePath = WorkPath;		
+		
+				output(WorkPath+"Temp_1.scr", "wtD") {							// create/edit the first temporary script file to invoke this ULP while the destination library is open
+					printf("OPEN \'%s\';\n",SourceFileName);					// open the source library file
+					printf("RUN '%s' 1 '%s';\n",ProgName,EditName);					// run this program with a '1' for the RunNumber (will enter case 1 instead of case 0 when it reruns this ulp
+				};		 
+				
+				sprintf(TempStr,"script %sTemp_1.scr",WorkPath);						// script name to run on exit (the first temporary script is create here
+				if (DEBUG == 1) dlgMessageBox(TempStr, "Script to Execute on exit");
+ 				exit(TempStr);									// exit this interation and run the temporary script	
+			}
+		} else {
+			dlgMessageBox("<b>ERROR</b><hr>This program can only work in the library editor.");
+		}
+		break;
+														
+	case 1:													// this is the second iteration of this ULP, the source library file opened through script 'Temp_1'
+	
+		library(SourceLibrary) { 										// assign a variable to library data
+			if (DEBUG == 1) dlgMessageBox(WorkPath,"Case1 start"); 						// display the variable, debugging only	
+			status("Loading Source File");								// read in destination library data
+			DstSymbolNum=0;										// number of symbols in destination library
+			DstPackageNum=0;										// number of symbols in destination library
+			DstDeviceNum=0;										// number of devices in destination library
+			for (x=0;x<Length;x++) {									// store the destination library information in arrays
+				strsplit(TempAry,FileInData[x],'\t');							// break up source data line name and description
+				if (TempAry[0]=="S") DstSymbol[DstSymbolNum++]=StrRTrim(TempAry[1]);				// name of a symbol in the destination library
+				else {
+					if (TempAry[0]=="P") DstPackage[DstPackageNum++]=StrRTrim(TempAry[1]); 		// name of a package in the destination library
+					else {
+						if (TempAry[0]=="D") DstDevice[DstDeviceNum++]=StrRTrim(TempAry[1]);		// name of a device in the destination library
+					}
+				}
+			}				
+			ListElement=0;										// number of elements in the display list
+			SourceLibrary.symbols(S) {									// go through the source library symbols looking for unique names
+				Str1=StrRTrim(S.name);								// name of symbol;  Str1=S.name - with spaces trimmed from the right hand side
+				y=0;
+				NotFound=1;									// Initialize variable NotFound
+				while ((y<DstSymbolNum) && (NotFound)) {						// check destination library for same name
+					if (DstSymbol[y]==Str1) NotFound=0;						// name match, leave out of list
+					else y++;									// else increment y and keep searching
+				}
+				if (NotFound) {										// no name match, add this symbol to the display list
+					SrcSymbol[SrcSymbolNum++]=Str1;							// increment symbolnum and save this symbol in the array as it isn't in the destination library.  This array doesn't seem to be retrieved
+					List[ListElement++]="*\tSymbol\t"+Str1+"\t";						// add symbol to list, |*	Symbol	Symbol.Name	|  there is no symbol description.
+				}
+			}
+			SourceLibrary.packages(P) {										// go through all source packages
+				Str1=StrRTrim(P.name);									// name of package
+				y=0;
+				NotFound=1;
+				while ((y<DstPackageNum) && (NotFound)) {							// search for name match in destination library
+					if (DstPackage[y]==Str1) NotFound=0;							// name match
+					else y++;
+				}
+				if (NotFound) {										// no name matched, add this package to list
+					SrcPackage[SrcPackageNum++]=Str1;							// save this package in the array as it isn't in the destination library
+					List[ListElement++]="*\tPackage\t"+Str1+"\t"+DescriptionToDisplay(P.description,20); 		// add package to display list |*	Package	Package.Name	Package.Description|
+				}
+			}
+			SourceLibrary.devicesets(D) {										// go through source library device sets
+				Str1=StrRTrim(D.name);									// name
+				y=0;
+				NotFound=1;
+				while ((y<DstDeviceNum) && (NotFound)) {							// search through destination library for same device set
+					if (DstDevice[y]==Str1) NotFound=0;							// same name found
+					else y++;
+				}
+				if (NotFound) {										// no such device set found
+					SrcDevice[SrcDeviceNum++]=Str1;							// save this device in the array as it isn't in the destination library
+					List[ListElement++]="*\tDevice Set\t"+Str1+"\t"+DescriptionToDisplay(D.description,20);		// add this device set to list |*	Device Set	Device.Name	Device.Description|
+				}
+			}
+		}
+		 if (DEBUG == 1) dlgMessageBox(WorkPath,"@finished searching"); 							// display the variable, debugging only	
+
+		dlgDialog("Copy unique elements from source library to destination library") {	// start dialog box
+			dlgHBoxLayout {
+				dlgListView("Selected\tType\tName\tDescription",List,selected) {					// header for display list | Selected   |  Type  | Name  | Description
+					if (strsub(List[selected],0,1)!=" ") {							// select toggles the select status
+						List[selected]=" "+strsub(List[selected],1,strlen(List[selected])-1);			// deselect if selected
+					} else {
+						List[selected]="*"+strsub(List[selected],1,strlen(List[selected])-1);			// select if not selected
+					}
+				};
+			};
+
+			dlgSpacing(10);
+			dlgHBoxLayout {
+				dlgPushButton("Toggle &All") {								// this button flips switches all status's to other state
+					ToggleStatus("");												// toggle status of all
+				}
+				dlgPushButton("Toggle Symbols") {													
+					ToggleStatus("Symbol");								// toggle status of Symbols
+				}
+				dlgPushButton("Toggle Packages") {													
+					ToggleStatus("Package");								// toggle status of Packages
+				};
+				dlgPushButton("Toggle Devices") {											
+					ToggleStatus("Device Set");								// toggle status of devices
+				}
+			};
+			dlgHBoxLayout {
+
+				dlgPushButton("Copy to Dest") {								// create script of all selected elements
+					for (x=0;x<ListElement;x++) {								// check devices to be copied to make sure packages and symbols are there
+						strsplit(TempAry,List[x],'\t');
+						if ((TempAry[0]=="*") && (TempAry[1]=="Device Set")) {
+							CheckDevice(TempAry[2]);						// check devices symbols and packages to make sure they will be in destination
+						}
+					}
+					DestinationFileName = argv[2];							// sets the destination file name to the original library written in temp_1 by the second argument
+					if (DEBUG == 1) dlgMessageBox(DestinationFileName,"DestinationFileName"); 			// display the variable, debugging only	
+					output(WorkPath+"Temp_2.scr", "wtD") {							// create second script file
+
+						if (DEBUG == 1) dlgMessageBox(WorkPath,"open temp2 for work"); 				// display the variable, debugging only
+						printf("OPEN \'%s\';\n",DestinationFileName);						// open destination library
+
+						library(SourceLibrary) {										// append selected additions
+							PrintGrid(SourceLibrary.grid);
+							SourceLibrary.layers(layer) {
+								PrintLayer(layer);
+							} 		
+							for (x=0;x<ListElement;x++) {
+								strsplit(TempAry,List[x],'\t');							// break up source data line name and description
+								if (TempAry[0]=="*") {												// This item is selected
+									if (TempAry[1]=="Symbol") {							// its a symbol
+										SourceLibrary.symbols(sym) {						// go through the symbols in the library
+											if (StrRTrim(sym.name)==TempAry[2]) {				// the names match
+												printf("\n");
+												PrintSymbol(sym);					// print this information as a script
+											}
+										};
+									} else {
+										if (TempAry[1]=="Package") {						// this item is a package
+											SourceLibrary.packages(pack) {				// go through the packages in the library
+												if (StrRTrim(pack.name)==TempAry[2]) {			// names match
+													printf("\n");
+													PrintPackage(pack);				// print the script entries information for the package
+												}
+											};
+										} else {
+											if (TempAry[1]=="Device Set") {				// this item is a device set
+												SourceLibrary.devicesets(dev) {			// go through all device sets in the library
+													if (StrRTrim(dev.name)==TempAry[2]) {		// names match
+														printf("\n");
+														PrintDeviceSet(dev);		// print the script entries for a device set
+													}
+												};
+											} 
+										}
+									}
+								}
+							}
+						}
+					}
+					sprintf(TempStr,"script %sTemp_2.scr",WorkPath);									// the name of the script to run 
+					exit(TempStr);												// exit and run the second script, which will import the items and write them out to the destination library 
+				}
+				dlgPushButton("-&Quit") {
+					dlgReject();
+				};
+				dlgPushButton("&Help") {
+					DisplayHelp();
+				};
+			};
+		};
+		break;
+};
+		
