@@ -1,5 +1,5 @@
 //======================================================
-// ALIGN v 1.0.3
+// ALIGN v 1.0.3   DialogAlign .02
 //
 // Eagle v6.0 or later is required. Only the board editor is supported.
 //
@@ -84,12 +84,9 @@ string cmd = "";
 
 string st = "";
 int Result = 0;
-//string msg = "";
 string ULPfilename = path_ulp[0] + '/' + "DialogAlignULP.txt";  // stores the dialog information
                                                    // kludgey workaround because ULPs can't access memory
-                                                   
 
-//string Text = "example text";
 
 int Lines = 0;
 
@@ -97,31 +94,31 @@ int Lines = 0;
 int horizontal = 0;
 int vertical   = 0;
 int dlgIncrement  = 0;
-int IncrementAmtInMils = 0; int IncrementAmtInMils2 = 0;
 int distribute = 0;
-
-int snap  = 0;
-int grid = 0;
+int snapGrid  = 0;
+int alignToGrid = 0;
 int align = 0;
-
 int keepInOrder = 0;
 int dlgRegEx = 0;
 int alignToObject = 0;
-int alignToComponent = 0;
+int alignComponents = 0;
 int flagsSet = 0;
-string ComponentString = "Components sep. by spaces"; 
+int numberOfComponents;
 string ObjectString = "";
+string ComponentText = "Components sep. by spaces";
+string ComponentList[];  // two dim text array (list) 
+int IncrementAmtInMils = 0;
 string boolParams = "000000000000000000";
-string compParams = "Components sep. by spaces";
+//string compParams = "Components sep. by spaces";
 string incrmntParm = "000000";
 int DBbools[];
 string str_DBbools= "000000000000";
 string inString;
-// set pointers to text box variables
+
 
 
 // Align ULP 1.0.3 by Danny Damhave Damhave Systems www.damhave.com
-// Dialog box by Paul Badger 2014
+// Dialog box implementation by Paul Badger 2014
 /*
 void initParamFile(){
 output(ULPfilename,"at"){
@@ -135,16 +132,17 @@ output(ULPfilename,"wt"){
 void saveParams(){       // save configs
 DBbools[0] = horizontal;
 DBbools[1] = vertical;
-DBbools[2] = snap;
-DBbools[3] = keepInOrder;
-DBbools[4] = alignToObject;
-DBbools[5] = alignToComponent;
-DBbools[6] = dlgRegEx;
-DBbools[7] = dlgIncrement;
-DBbools[8] = distribute;
-DBbools[9] = 0; //unused
+DBbools[2] = snapGrid;
+DBbools[3] = alignToGrid;
+DBbools[4] = keepInOrder;
+DBbools[5] = alignToObject;
+DBbools[6] = alignComponents;
+DBbools[7] = dlgRegEx;
+DBbools[8] = dlgIncrement;
+DBbools[9] = distribute;
 DBbools[10] = 0; //unused
 DBbools[11] = 0; //unused
+
 
 for (int i = 0; i < 12; i++){
       if  (DBbools[i]) str_DBbools[i] = '1';
@@ -152,7 +150,10 @@ for (int i = 0; i < 12; i++){
  }
 
 output(ULPfilename,"wt"){
-      printf("Bools:%s\n", str_DBbools); 
+      printf("Bools:%s\n", str_DBbools);
+      printf("ObStr:%s\n", ObjectString);
+      printf("CmpSt:%s\n", ComponentText);
+      printf("IncMs:%d\n", IncrementAmtInMils);
 }
 
 }
@@ -160,22 +161,30 @@ output(ULPfilename,"wt"){
 
 void getParams(){
 int i = 0;
-int nChars = fileread(inString, ULPfilename);
+string Sarray[];
+int nStrings = fileread(inString, ULPfilename);
+nStrings = strsplit(Sarray, inString, '\n');
 
-int DBoffset = strrstr(inString, "Bools:") + 6;
+ObjectString = strsub(Sarray[1], 6, strlen(Sarray[1]));
+ComponentText = strsub(Sarray[2], 6, strlen(Sarray[2]));
+IncrementAmtInMils = strtol(strsub(Sarray[3], 6, strlen(Sarray[2])));
 
-horizontal =       inString[i++ + DBoffset] - '0'; 
-vertical =         inString[i++ + DBoffset] - '0'; 
-snap =             inString[i++ + DBoffset] - '0'; 
-keepInOrder =      inString[i++ + DBoffset] - '0'; 
-alignToObject =    inString[i++ + DBoffset] - '0'; 
-alignToComponent = inString[i++ + DBoffset] - '0'; 
-dlgRegEx =         inString[i++ + DBoffset] - '0'; 
-dlgIncrement =     inString[i++ + DBoffset] - '0'; 
-distribute =       inString[i++ + DBoffset] - '0'; 
-DBbools[9] =       inString[i++ + DBoffset] - '0'; 
-DBbools[10] =      inString[i++ + DBoffset] - '0'; 
-DBbools[11] =      inString[i++ + DBoffset] - '0'; 
+
+//Parse out Boolean checkbox info
+
+horizontal =        Sarray[0][i++ + 6] - '0'; 
+vertical =          Sarray[0][i++ + 6] - '0'; 
+snapGrid =          Sarray[0][i++ + 6] - '0';
+alignToGrid =       Sarray[0][i++ + 6] - '0';
+keepInOrder =       Sarray[0][i++ + 6] - '0';
+alignToObject =     Sarray[0][i++ + 6] - '0'; 
+alignComponents =   Sarray[0][i++ + 6] - '0'; 
+dlgRegEx =          Sarray[0][i++ + 6] - '0'; 
+dlgIncrement =      Sarray[0][i++ + 6] - '0'; 
+distribute =        Sarray[0][i++ + 6] - '0';
+DBbools[9] =        Sarray[0][i++ + 6] - '0';
+DBbools[10] =       Sarray[0][i++ + 6] - '0';
+DBbools[11] =       Sarray[0][i++ + 6] - '0';  
 
 }
 
@@ -190,18 +199,19 @@ Result = dlgDialog("Dialog for Align ULP") {
           
 
            dlgCell(1, 1) {   dlgCheckBox("&Force Vertical -v", vertical) if (vertical) horizontal = 0; }; 
-           dlgCell(2, 1) {  dlgCheckBox("&Force Horizontal -h", horizontal) if (horizontal) vertical = 0; };          
-           dlgCell(3, 1) {  dlgCheckBox("&Snap to Grid -s", snap); };
-           dlgCell(4, 1) {  dlgCheckBox("&Keep Parts In Order -k", keepInOrder); };
-           dlgCell(5, 1) {  dlgCheckBox("&Align To Object -o", alignToObject); };
-		   dlgCell(6, 1) {  dlgStringEdit(ObjectString); }; 
-           dlgCell(7, 1) {  dlgCheckBox("&Align To Component -c", alignToComponent); };
-           dlgCell(8, 1) {  dlgStringEdit(ComponentString); };
-           dlgCell(9, 1) {  dlgCheckBox("&Use Regular Expressions -e", dlgRegEx); };   
-           dlgCell(10, 1) {  dlgCheckBox("&Distribute -d", distribute) if (distribute) dlgIncrement = 0; };
-           dlgCell(11, 1){  dlgCheckBox("&Increment -i (in mils)", dlgIncrement) if (dlgIncrement) distribute = 0; };
-           dlgCell(12, 1){  dlgIntEdit(IncrementAmtInMils, -40000, 40000); };
-           dlgCell(13, 1){  dlgLabel(ObjectString, 1 ); };
+           dlgCell(2, 1) {  dlgCheckBox("&Force Horizontal -h", horizontal) if (horizontal) vertical = 0; };
+           dlgCell(3, 1) {  dlgCheckBox("&Align to Grid -s", alignToGrid) if (alignToGrid) alignComponents = 0; };          
+           dlgCell(4, 1) {  dlgCheckBox("&Snap to Grid -s", snapGrid);  };
+           dlgCell(5, 1) {  dlgCheckBox("&Keep Parts In Order -k", keepInOrder); };
+           dlgCell(6, 1) {  dlgCheckBox("&Align To Object -o", alignToObject) if (alignToObject) alignComponents = 0; };
+           dlgCell(7, 1) {  dlgStringEdit(ObjectString); }; 
+           dlgCell(8, 1) {  dlgCheckBox("&Align Components -c", alignComponents); };
+           dlgCell(9, 1) {  dlgStringEdit(ComponentText); };
+           dlgCell(10, 1){  dlgCheckBox("&Use Regular Expressions -e", dlgRegEx); };   
+           dlgCell(11, 1){  dlgCheckBox("&Distribute -d", distribute) if (distribute) dlgIncrement = 0; };
+           dlgCell(12, 1){  dlgCheckBox("&Increment -i (in mils)", dlgIncrement) if (dlgIncrement) distribute = 0; };
+           dlgCell(13, 1){  dlgIntEdit(IncrementAmtInMils, -40000, 40000); };
+           dlgCell(14, 1){  dlgLabel(ObjectString, 1 ); };
            dlgRedisplay();
          }
            
@@ -219,22 +229,29 @@ Result = dlgDialog("Dialog for Align ULP") {
            dlgStretch(0);
            }
    
-   dlgStretch(0);
-    dlgRedisplay();
- }
+          dlgStretch(0);
+          dlgRedisplay();
+       }
   };
 
 if (Result == -1){
 exit (0);
 }
 
+if (Result == 1){  // dialog exited with "OK"
+numberOfComponents = strsplit(ComponentList, ComponentText, ' ');   // parse out component list
 
+}
 
 
 // dialog box ends here
 
 int isMatch(string s, string test, int useRegex)
 {
+int j;
+//dlgMessageBox(s + ' ' + test + j++ );
+
+
 	string regex = !useRegex ?  "^" : test;
 	if (!useRegex)
 	{
@@ -255,19 +272,26 @@ int isMatch(string s, string test, int useRegex)
 	return strxstr(s, regex, 0) == 0;
 }
 
+
+
+// argv is a list - two-dimensional text array
+
+
 int inList(string name)
 {
-	for(int i = firstInList; i < argc && argv[i] != ""; i++)
+//dlgMessageBox(name);
+	for(int i = 0 /*firstInList*/; (i < numberOfComponents) && (ComponentList[i] != "")   /* argc && argv[i]  != ""*/ ; i++)
 	{
 		if (regexFlag)
 		{
-			if (isMatch(name, argv[i], regexFlag)) return true;
+			if (isMatch(name, ComponentList[i] /*argv[i]*/ , regexFlag)) return true;
 		}
 		else
 		{
-			if (isMatch(strupr(name), strupr(argv[i]), regexFlag)) return true;
+			if (isMatch(strupr(name), strupr(ComponentList[i] /*argv[i]*/), regexFlag)){ /*dlgMessageBox("true");*/ return true; }
 		}
 	}
+  //  dlgMessageBox("false");
 	return false;
 }
 
@@ -343,7 +367,7 @@ int SortPartList (UL_BOARD brd, int nEls, int DirIsX, int reverse)
 
 
 //		***** The ulp begins here *****
-if (!board && !dlgMessageBox("Can only be used in the board editor.\n")) exit(1);
+if ((!board && !library )&& !dlgMessageBox("Can only be used in the board editor.\n")) exit(1);
 if (EAGLE_VERSION < 6 && !dlgMessageBox("Requires Eagle v5.7 or later.\n")) exit(1);
 
  // parse out dialog box attributes   //PAB
@@ -352,14 +376,14 @@ if (EAGLE_VERSION < 6 && !dlgMessageBox("Requires Eagle v5.7 or later.\n")) exit
 		if (horizontal) alignOnHorizontalLine = true;
 		if (keepInOrder) keepFlag = true;
 		if (dlgIncrement) incrementFlag = true;
-		if (grid) { alignToGridFlag = true; alignToComponentFlag = false; }
-        if (alignToComponent)  alignToComponentFlag = true;
+		if (alignToGrid) { alignToGridFlag = true; alignToComponentFlag = false; }
+        if (alignComponents)  alignToComponentFlag = true;
 		if (alignToObject){ alignToObjectFlag = true; alignToComponentFlag = false; }
-		if (snap) snapFlag = true;
+		if (snapGrid) snapFlag = true;
 		if (vertical) alignOnVerticalLine = true;
 
          // this is kind of clunky - needed to trigger flag parsing below - PAB
-         if ( distribute || dlgRegEx || horizontal || keepInOrder || keepInOrder || dlgIncrement || grid || alignToComponent || alignToObject || snap || vertical){
+         if ( distribute || dlgRegEx || horizontal || keepInOrder || keepInOrder || dlgIncrement || snapGrid || alignComponents || alignToObject || vertical){
           flagsSet = 1; }
                          
                          
@@ -409,6 +433,7 @@ if (flagsSet)
 	else;	// There are no flags therefore use the default align to bottommost/leftmost object in the direction with the most spread
 }
 if (alignToComponentFlag) mode = LIST;   // (argc>firstInList) mode = LIST;  // don't understand this PAB
+else mode = GROUP;
 
 board(brd)
 {
@@ -421,7 +446,7 @@ board(brd)
 	status("Aligning Objects...");
 	brd.elements(element)
 	{
-	    if ((mode == GROUP && ingroup(element)) || (mode == LIST && inList(element.name)))
+	    if ((mode == GROUP && ingroup(element)) || (mode == LIST && inList(element.name)))      //  inList(element.name)))  
 	    {
 		noElements += 1;
 		if (element.x < xMin) xMin = element.x;
@@ -448,7 +473,7 @@ board(brd)
 	    if (alignToObjectFlag) xAligned = xRefObject;											// Align on a vertical line going through the reference object ?
 	    else brd.elements(element)																// Align on a vertical line going through to the leftmost bottommost object
 	    {
-		if ((mode == GROUP && ingroup(element)) || (mode == LIST && inList(element.name)))
+		if ((mode == GROUP && ingroup(element)) || (mode == LIST && inList(element.name)))   //inList(element.name)))
 		{
 		    if (element.y == yMin) xAligned = (snapFlag || alignToGridFlag) ? snapToGrid(brd, element.x) : ((element.x < xAligned) ? element.x : xAligned);
 		}
@@ -464,7 +489,7 @@ board(brd)
 	    if (alignToObjectFlag) yAligned = yRefObject;											// Align on a horizontal line going through the reference object ?
 	    else brd.elements(element)																// Align on a horizontal line going through to the leftmost bottommost object
 	    {
-		if ((mode == GROUP && ingroup(element)) || (mode == LIST && inList(element.name)))
+		if ((mode == GROUP && ingroup(element)) || (mode == LIST && inList(element.name)))               //inList(element.name)))
 		{
 		    if (element.x == xMin) yAligned = (snapFlag || alignToGridFlag) ? snapToGrid(brd, element.y) : ((element.y < yAligned) ? element.y : yAligned);
 		}
