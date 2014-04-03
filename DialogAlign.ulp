@@ -119,15 +119,17 @@ string inString;
 
 // Align ULP 1.0.3 by Danny Damhave Damhave Systems www.damhave.com
 // Dialog box implementation by Paul Badger 2014
-/*
+
+
 void initParamFile(){
-output(ULPfilename,"at"){
-      printf("");  // create a new file if it doesn't exist
+     int size = filesize(ULPfilename);
+     if (!size){
+     output(ULPfilename,"wt"){
+         printf("0000000000000000000000000000");  // paranoia to make  
+        }
+     }
 }
-output(ULPfilename,"wt"){
-      printf("0000000000000");  // paranoia to make  
-}
-*/
+
 
 void saveParams(){       // save configs
 DBbools[0] = horizontal;
@@ -188,7 +190,7 @@ DBbools[11] =       Sarray[0][i++ + 6] - '0';
 
 }
 
-
+initParamFile();
 getParams();
 Result = dlgDialog("Dialog for Align ULP") {
   dlgVBoxLayout {
