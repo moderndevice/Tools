@@ -1,5 +1,5 @@
 //======================================================
-// ALIGN v 1.0.3   DialogAlign .02
+// DialogAlign v0.2 based on Align v 1.0.3 by Danny Danhave
 //
 // Eagle v6.0 or later is required. Only the board editor is supported.
 //
@@ -30,16 +30,14 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 // OF SUCH DAMAGE.
 //======================================================
-#usage	"<B>Aligns board components in group or listed at the command line</B>"
+#usage	"<B>Aligns board components in group or listed in the components field</B>"
 "<P>"
-	"<P>"
 	"Align components along a line parallel to the x or y axis of the board.<br>"
-	"The direction of alignment is autodetected by looking at the position of the components. The alignment direction can also be forced.<br><br>"
-	"<b>Usage:</b>"
-	"<blockquote>run dialogalign [*]<br>"
-	"<b>Flag:</b>"
-	" The presence of a  flag causes the ULP to run without the dialog with the last options set.<br />"
-	"<h3>Options:</h3>"
+	"The direction of alignment is autodetected by looking at the position of the components. The alignment direction can also be forced.<br>"
+	"<b>Options:</b>"
+	/* Previous flags for reference "<b>blockquote>run dialogalign [*]<br>"
+	//" The presence of a  flag causes the ULP to run without the dialog with the last options set.<br />"
+	"<br /><h3>Options:</h3>"
 	"d: Distribute components evenly between the outermost components<br>"
 	"e: use regular Expressions (regex) instead of wildcards<br>"
 	"g: align to Grid<br>"
@@ -50,43 +48,33 @@
 	"k: Keep original part order if parts are already in the correct order but not aligned<br>"
 	"v: Force alignment on a Vertical line"
 	"<I>The components in the selection group are used when no components are specified at the command line.<br>"
-	"The align to the bottommost/leftmost component flag -c is default set if no -g or -o flags are specified</I></blockquote>"
+	"The align to the bottommost/leftmost component flag -c is default set if no -g or -o flags are specified</I></blockquote>" */
 	"<P>"
-	"<b>Force Horizontal</b><br>"
-	"Forces horizontal alignment."
+	"<b>Force Horizontal</b><br />"
+	"&nbsp;&nbsp;&nbsp;Forces horizontal alignment.<br />"
 	"<b>Force Vertical</b><br>"
-	"Forces vertical alignment."
+	"&nbsp;&nbsp;&nbsp;Forces vertical alignment.<br />"
 	"<b>Snap to Grid</b><br>"
-	"Forces components to nearest gridpoint"
+	"&nbsp;&nbsp;&nbsp;Forces components to nearest gridpoint. May be used with all other options.<br />"
 	"<b>Align to Grid</b><br>"
-	"The next three options are mutually exclusive to each other.<br />"
-	"Aligns components on a horizontal or vertical gridline but not to gridpoints"
-	"<b>Align to component</b><br>"
-	"Aligns objects to a component"
-	"<b>Force Horizontal</b><br>"
-	"Forces horizontal alignment."
-	"<b>Force Horizontal</b><br>"
-	"Forces horizontal alignment."
-	"<b>Force Horizontal</b><br>"
-	"Forces horizontal alignment."
-	"<b>Force Horizontal</b><br>"
-	"Forces horizontal alignment."
-	"<blockquote>run align -v</blockquote>"
-	"Align the resistors R1, R2, R3 on a horizontal line and snap to grid:"
-	"<blockquote>run align -hg R1 R2 R3</blockquote>"
-	"Align the connectors J1, J2 and J4 to the hole H2:"
-	"<blockquote>run align -o H2 J1 J2 J4</blockquote>"
-	"Align the selected components to the bottommost leftmost component, increment the position with 0.5 for each component:"
-	"<blockquote>run align -i 0.5</blockquote>"
-	"Align all LEDs to the nearest grid line and distribute them evenly along the line:"
-	"<blockquote>run align -gd LED*</blockquote>"
-	"Align all LEDs to the nearest grid line and snap to the grid points along the line:"
-	"<blockquote>run align -gs LED*</blockquote>"
-	"<P>"
-	"Copyright (c) 2010-2011 Damhave Systems"
-	"<P>"
-	"<Author>Danny Damhave<br>Damhave Systems<br>www.damhave.com</Author><br><br>"
-	"This ulp is released under the BSD 4-clause license. See source code for details!"
+	"&nbsp;&nbsp;&nbsp;Aligns components on a horizontal or vertical gridline but not to gridpoints.<br />"
+	"<b>Align to Reference Object</b><br>"
+	"&nbsp;&nbsp;&nbsp;Aligns component to a Reference Object. The reference object need not be selected or in the group selection.<br />"
+	"<b>Component List</b><br>"
+	"&nbsp;&nbsp;&nbsp;A list of components to align, separated by spaces. Components need not be selected. \"*\" is a wildcard.<br />"
+	"<b>Use Regular Expressions</b><br>"
+	"&nbsp;&nbsp;&nbsp;Uses regular expressions in the component list fields instead of asterisk wildcard.<br />"
+	"<b>Distribute</b><br>"
+	"&nbsp;&nbsp;&nbsp;Equally distributes components between the first and last selected component.<br />"
+	"<b>Increment</b><br>"
+	"&nbsp;&nbsp;&nbsp;Increments each component the amount shown in the field.<br />"
+     "<P>"
+	"DialogAlign Copyright (c) 2014 Paul Badger<br />"
+	"Align ULN on which DialogAlign is based: Copyright (c) 2010-2011 Damhave Systems<br />"
+
+	"<Author>Paul Badger & Danny Damhave<br>ModernDevice.com<br />"
+	"Damhave Systems www.damhave.com</Author><br>"
+	"This ulp is released under the BSD 4-clause license. See source code for details."
 
 enum {false, true};
 enum {ALIGN_ALONG_YAXIS, ALIGN_ALONG_XAXIS};
@@ -218,25 +206,23 @@ getParams();
 Result = dlgDialog("Dialog for Align ULP") {
   dlgVBoxLayout {
      dlgStretch(0);
-     dlgGroup("Align ULP by Danny Damhave v1.0.3") {
+     dlgGroup("D_Align ULP by Paul Badger v0.2") {
         dlgStretch(1);
         dlgGridLayout {
           
-
            dlgCell(1, 1) {   dlgCheckBox("&Force Vertical", vertical) if (vertical) horizontal = 0; }; 
            dlgCell(2, 1) {  dlgCheckBox("&Force Horizontal", horizontal) if (horizontal) vertical = 0; };
            dlgCell(3, 1) {  dlgCheckBox("&Keep Parts In Order", keepInOrder); };
            dlgCell(4, 1) {  dlgCheckBox("&Snap to Grid ", snapGrid);  };
            dlgCell(5, 1) {  dlgCheckBox("&Align to Grid", alignToGrid) if (alignToGrid) dlgLogic(1); };                     
-           dlgCell(6, 1) {  dlgCheckBox("&Reference Object to which to Align -o", alignToObject) if (alignToObject) dlgLogic(2); };
+           dlgCell(6, 1) {  dlgCheckBox("&Reference Object to which to Align", alignToObject) if (alignToObject) dlgLogic(2); };
            dlgCell(7, 1) {  dlgStringEdit(ObjectString); }; 
-           dlgCell(8, 1) {  dlgCheckBox("&Align Components", alignComponents) if (alignComponents ) dlgLogic(3); };
+           dlgCell(8, 1) {  dlgCheckBox("&Components to Align - need not be selected", alignComponents) if (alignComponents ) dlgLogic(3); };
            dlgCell(9, 1) {  dlgStringEdit(ComponentText); };
            dlgCell(10, 1){  dlgCheckBox("&Use Regular Expressions", dlgRegEx); };   
            dlgCell(11, 1){  dlgCheckBox("&Distribute", distribute) if (distribute) dlgIncrement = 0; };
            dlgCell(12, 1){  dlgCheckBox("&Increment (in mils)", dlgIncrement) if (dlgIncrement) distribute = 0; };
-           dlgCell(13, 1){  dlgIntEdit(IncrementAmtInMils, -40000, 40000); };
-           dlgCell(14, 1){  dlgLabel(ObjectString, 1 ); };
+           dlgCell(13, 1){  dlgIntEdit(IncrementAmtInMils, -40000, 40000); }
            dlgRedisplay();
          }
            
