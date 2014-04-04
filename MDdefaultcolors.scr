@@ -1,8 +1,6 @@
-# Set the default colors:
-
-
-set palette white;
+# Set the default colors: Only sets the white palette because that's all I use
 # you can't change index 0 in the white palette
+set palette white;
 
 set palette 1  0xB41CC2FE;
 set palette 2  0xB4002400;

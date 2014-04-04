@@ -1,5 +1,5 @@
 //======================================================
-// DialogAlign v0.2 based on Align v 1.0.3 by Danny Danhave
+// ALIGN v 1.0.3   DialogAlign .02
 //
 // Eagle v6.0 or later is required. Only the board editor is supported.
 //
@@ -30,14 +30,16 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 // OF SUCH DAMAGE.
 //======================================================
-#usage	"<B>Aligns board components in group or listed in the components field</B>"
+#usage	"<B>Aligns board components in group or listed at the command line</B>"
 "<P>"
+	"<P>"
 	"Align components along a line parallel to the x or y axis of the board.<br>"
-	"The direction of alignment is autodetected by looking at the position of the components. The alignment direction can also be forced.<br>"
-	"<b>Options:</b>"
-	/* Previous flags for reference "<b>blockquote>run dialogalign [*]<br>"
-	//" The presence of a  flag causes the ULP to run without the dialog with the last options set.<br />"
-	"<br /><h3>Options:</h3>"
+	"The direction of alignment is autodetected by looking at the position of the components. The alignment direction can also be forced.<br><br>"
+	"<b>Usage:</b>"
+	"<blockquote>run align<br>"
+	"run align [-flag{flag}] [increment] [ref object] {component}</blockquote>"
+	"<b>Flags:</b>"
+	"<blockquote>c: align to the bottommost/leftmost Component in group or list<br>"
 	"d: Distribute components evenly between the outermost components<br>"
 	"e: use regular Expressions (regex) instead of wildcards<br>"
 	"g: align to Grid<br>"
@@ -46,35 +48,28 @@
 	"o: align to reference Object<br>"
 	"s: Snap to grid<br>"
 	"k: Keep original part order if parts are already in the correct order but not aligned<br>"
-	"v: Force alignment on a Vertical line"
+	"v: Force alignment on a Vertical line</blockquote>"
 	"<I>The components in the selection group are used when no components are specified at the command line.<br>"
-	"The align to the bottommost/leftmost component flag -c is default set if no -g or -o flags are specified</I></blockquote>" */
+	"The align to the bottommost/leftmost component flag -c is default set if no -g or -o flags are specified</I></blockquote>"
 	"<P>"
-	"<b>Force Horizontal</b><br />"
-	"&nbsp;&nbsp;&nbsp;Forces horizontal alignment.<br />"
-	"<b>Force Vertical</b><br>"
-	"&nbsp;&nbsp;&nbsp;Forces vertical alignment.<br />"
-	"<b>Snap to Grid</b><br>"
-	"&nbsp;&nbsp;&nbsp;Forces components to nearest gridpoint. May be used with all other options.<br />"
-	"<b>Align to Grid</b><br>"
-	"&nbsp;&nbsp;&nbsp;Aligns components on a horizontal or vertical gridline but not to gridpoints.<br />"
-	"<b>Align to Reference Object</b><br>"
-	"&nbsp;&nbsp;&nbsp;Aligns component to a Reference Object. The reference object need not be selected or in the group selection.<br />"
-	"<b>Component List</b><br>"
-	"&nbsp;&nbsp;&nbsp;A list of components to align, separated by spaces. Components need not be selected. \"*\" is a wildcard.<br />"
-	"<b>Use Regular Expressions</b><br>"
-	"&nbsp;&nbsp;&nbsp;Uses regular expressions in the component list fields instead of asterisk wildcard.<br />"
-	"<b>Distribute</b><br>"
-	"&nbsp;&nbsp;&nbsp;Equally distributes components between the first and last selected component.<br />"
-	"<b>Increment</b><br>"
-	"&nbsp;&nbsp;&nbsp;Increments each component the amount shown in the field.<br />"
-     "<P>"
-	"DialogAlign Copyright (c) 2014 Paul Badger<br />"
-	"Align ULN on which DialogAlign is based: Copyright (c) 2010-2011 Damhave Systems<br />"
-
-	"<Author>Paul Badger & Danny Damhave<br>ModernDevice.com<br />"
-	"Damhave Systems www.damhave.com</Author><br>"
-	"This ulp is released under the BSD 4-clause license. See source code for details."
+	"<b>Examples:</b><br>"
+	"Align the selected components to the bottommost leftmost component, force alignment on a vertical line:"
+	"<blockquote>run align -v</blockquote>"
+	"Align the resistors R1, R2, R3 on a horizontal line and snap to grid:"
+	"<blockquote>run align -hg R1 R2 R3</blockquote>"
+	"Align the connectors J1, J2 and J4 to the hole H2:"
+	"<blockquote>run align -o H2 J1 J2 J4</blockquote>"
+	"Align the selected components to the bottommost leftmost component, increment the position with 0.5 for each component:"
+	"<blockquote>run align -i 0.5</blockquote>"
+	"Align all LEDs to the nearest grid line and distribute them evenly along the line:"
+	"<blockquote>run align -gd LED*</blockquote>"
+	"Align all LEDs to the nearest grid line and snap to the grid points along the line:"
+	"<blockquote>run align -gs LED*</blockquote>"
+	"<P>"
+	"Copyright (c) 2010-2011 Damhave Systems"
+	"<P>"
+	"<Author>Danny Damhave<br>Damhave Systems<br>www.damhave.com</Author><br><br>"
+	"This ulp is released under the BSD 4-clause license. See source code for details!"
 
 enum {false, true};
 enum {ALIGN_ALONG_YAXIS, ALIGN_ALONG_XAXIS};
@@ -82,7 +77,7 @@ enum {GROUP, LIST};
 string outputFileName = "aligntempfile.scr";
 string partlist[];
 int alignment, xRefObject = INT_MAX, yRefObject = INT_MAX, xAligned = INT_MAX, yAligned = INT_MAX, xMin = INT_MAX, xMax = INT_MIN, yMax = INT_MIN, yMin = INT_MAX, noElements = 0, mode = GROUP, firstInList = 1,
-	alignToComponentFlag = false, keepFlag=false, alignToGridFlag = false, alignToObjectFlag = false, alignOnVerticalLine = false, alignOnHorizontalLine = false, regexFlag = false, snapFlag = false, distributeFlag = false, incrementFlag = false;
+	alignToComponentFlag = true, keepFlag=false, alignToGridFlag = false, alignToObjectFlag = false, alignOnVerticalLine = false, alignOnHorizontalLine = false, regexFlag = false, snapFlag = false, distributeFlag = false, incrementFlag = false;
 real distance, increment, xAvg = 0.0, yAvg = 0.0;
 
 int Result = 0;
@@ -91,7 +86,7 @@ int Result = 0;
 string ULPfilename = path_ulp[0] + '/' + "DialogAlignULP.txt"; 
 
 // Checkboxes variables for the dialog
-int horizontal = 0, vertical = 0, dlgIncrement  = 0, distribute = 0, snapGrid  = 0, alignToGrid = 0, align = 0, keepInOrder = 0;
+int horizontal = 0, vertical = 0, dlgIncrement  = 0, distribute = 0, snapGrid  = 0, alignToGrid = 0, align = , keepInOrder = 0;
 int dlgRegEx = 0, alignToObject = 0, alignComponents = 0, flagsSet = 0, numberOfComponents, IncrementAmtInMils = 0;
 
 int DBbools[];
@@ -110,12 +105,10 @@ string inString;
 
 void initParamFile(){
 int size = filesize(ULPfilename);
-if (!size){output(ULPfilename,"wt");
-      printf("0000000000000000000");
-      }
-} 
+if (!size){output(ULPfilename,"wt"){
+      printf("0000000000000000000"); 
 
-void saveParams(){      
+void saveParams(){       // save configs
 DBbools[0] = horizontal;
 DBbools[1] = vertical;
 DBbools[2] = snapGrid;
@@ -143,16 +136,6 @@ output(ULPfilename,"wt"){
 
 }
 
-void help(void) {
-  dlgDialog("HELP LayerSequence") {
-    dlgLabel(usage);
-    dlgHBoxLayout {
-      dlgStretch(0);
-      dlgPushButton("+OK") dlgAccept();
-      dlgStretch(0);
-    }
-  };
-}
 
 void getParams(){
 int i = 0;
@@ -162,7 +145,7 @@ nStrings = strsplit(Sarray, inString, '\n');
 
 ObjectString = strsub(Sarray[1], 6, strlen(Sarray[1]));
 ComponentText = strsub(Sarray[2], 6, strlen(Sarray[2]));
-IncrementAmtInMils = strtol(strsub(Sarray[3], 6, strlen(Sarray[3])));
+IncrementAmtInMils = strtol(strsub(Sarray[3], 6, strlen(Sarray[2])));
 
 
 //Parse out Boolean checkbox info
@@ -183,46 +166,30 @@ DBbools[11] =       Sarray[0][i++ + 6] - '0';
 
 }
 
-void dlgLogic(int selected){
-if (selected == 1){     //alignToGrid
-alignComponents = 0;
-alignToObject = 0;
-}
-
-if (selected == 2){     //alignToObject 
-alignToGrid = 0;
-alignComponents = 0;
-}
-
-if (selected == 3){     //alignComponents
-alignToGrid = 0;
-alignToObject = 0;
-}
-
-dlgRedisplay();
-}
 
 getParams();
 Result = dlgDialog("Dialog for Align ULP") {
   dlgVBoxLayout {
      dlgStretch(0);
-     dlgGroup("D_Align ULP by Paul Badger v0.2") {
+     dlgGroup("Align ULP by Danny Damhave v1.0.3") {
         dlgStretch(1);
         dlgGridLayout {
           
-           dlgCell(1, 1) {   dlgCheckBox("&Force Vertical", vertical) if (vertical) horizontal = 0; }; 
-           dlgCell(2, 1) {  dlgCheckBox("&Force Horizontal", horizontal) if (horizontal) vertical = 0; };
-           dlgCell(3, 1) {  dlgCheckBox("&Keep Parts In Order", keepInOrder); };
-           dlgCell(4, 1) {  dlgCheckBox("&Snap to Grid ", snapGrid);  };
-           dlgCell(5, 1) {  dlgCheckBox("&Align to Grid", alignToGrid) if (alignToGrid) dlgLogic(1); };                     
-           dlgCell(6, 1) {  dlgCheckBox("&Reference Object to which to Align", alignToObject) if (alignToObject) dlgLogic(2); };
+
+           dlgCell(1, 1) {   dlgCheckBox("&Force Vertical -v", vertical) if (vertical) horizontal = 0; }; 
+           dlgCell(2, 1) {  dlgCheckBox("&Force Horizontal -h", horizontal) if (horizontal) vertical = 0; };
+           dlgCell(3, 1) {  dlgCheckBox("&Align to Grid -s", alignToGrid) if (alignToGrid) alignComponents = 0; };          
+           dlgCell(4, 1) {  dlgCheckBox("&Snap to Grid -s", snapGrid);  };
+           dlgCell(5, 1) {  dlgCheckBox("&Keep Parts In Order -k", keepInOrder); };
+           dlgCell(6, 1) {  dlgCheckBox("&Align To Object -o", alignToObject) if (alignToObject) alignComponents = 0; };
            dlgCell(7, 1) {  dlgStringEdit(ObjectString); }; 
-           dlgCell(8, 1) {  dlgCheckBox("&Components to Align - need not be selected", alignComponents) if (alignComponents ) dlgLogic(3); };
+           dlgCell(8, 1) {  dlgCheckBox("&Align Components -c", alignComponents); };
            dlgCell(9, 1) {  dlgStringEdit(ComponentText); };
-           dlgCell(10, 1){  dlgCheckBox("&Use Regular Expressions", dlgRegEx); };   
-           dlgCell(11, 1){  dlgCheckBox("&Distribute", distribute) if (distribute) dlgIncrement = 0; };
-           dlgCell(12, 1){  dlgCheckBox("&Increment (in mils)", dlgIncrement) if (dlgIncrement) distribute = 0; };
-           dlgCell(13, 1){  dlgIntEdit(IncrementAmtInMils, -40000, 40000); }
+           dlgCell(10, 1){  dlgCheckBox("&Use Regular Expressions -e", dlgRegEx); };   
+           dlgCell(11, 1){  dlgCheckBox("&Distribute -d", distribute) if (distribute) dlgIncrement = 0; };
+           dlgCell(12, 1){  dlgCheckBox("&Increment -i (in mils)", dlgIncrement) if (dlgIncrement) distribute = 0; };
+           dlgCell(13, 1){  dlgIntEdit(IncrementAmtInMils, -40000, 40000); };
+           dlgCell(14, 1){  dlgLabel(ObjectString, 1 ); };
            dlgRedisplay();
          }
            
@@ -234,9 +201,7 @@ Result = dlgDialog("Dialog for Align ULP") {
             dlgAccept(1);           
             }
            dlgStretch(1);
-           dlgSpacing(10);
-        dlgPushButton("&HELP") help();
-        dlgSpacing(10);
+           dlgSpacing(30);
            dlgStretch(1);
            dlgPushButton("-CANCEL") dlgReject(-1);
            dlgStretch(0);
@@ -343,7 +308,7 @@ int SortPartList (UL_BOARD brd, int nEls, int DirIsX, int reverse)
 
     if (keepFlag == false) return 0;
 
-    for (i=0; i < nEls; i++)
+    for (i=0; i<nEls; i++)
     {
 	brd.elements(e1)
 	{
@@ -357,7 +322,8 @@ int SortPartList (UL_BOARD brd, int nEls, int DirIsX, int reverse)
 	getauscht = 0;
 	for (i=0; i<nEls-1; i++)
 	{
-	    j = i+1;
+	    j=i+1;
+
 	    if ((reverse == 0 && coord[i] > coord[j]) || (reverse == 1 && coord[i] < coord[j]))
 	    {
 		getauscht = 1;
@@ -376,20 +342,21 @@ int SortPartList (UL_BOARD brd, int nEls, int DirIsX, int reverse)
 }
 
 
+
+
 //		***** The ulp begins here *****
 if ((!board && !library )&& !dlgMessageBox("Can only be used in the board editor.\n")) exit(1);
 if (EAGLE_VERSION < 6 && !dlgMessageBox("Requires Eagle v5.7 or later.\n")) exit(1);
 
- // parse out dialog box attributes  the logic in the flag list below
- // and the "illegal flag test has been moved to the dialog box
+ // parse out dialog box attributes   //PAB
 		if (distribute) distributeFlag = true;
 		if (dlgRegEx) regexFlag = true;
 		if (horizontal) alignOnHorizontalLine = true;
 		if (keepInOrder) keepFlag = true;
 		if (dlgIncrement) incrementFlag = true;
-		if (alignToGrid) { alignToGridFlag = true; }
+		if (alignToGrid) { alignToGridFlag = true; alignToComponentFlag = false; }
         if (alignComponents)  alignToComponentFlag = true;
-		if (alignToObject){ alignToObjectFlag = true; }
+		if (alignToObject){ alignToObjectFlag = true; alignToComponentFlag = false; }
 		if (snapGrid) snapFlag = true;
 		if (vertical) alignOnVerticalLine = true;
 
@@ -397,10 +364,15 @@ if (EAGLE_VERSION < 6 && !dlgMessageBox("Requires Eagle v5.7 or later.\n")) exit
          if ( distribute || dlgRegEx || horizontal || keepInOrder || keepInOrder || dlgIncrement || snapGrid || alignComponents || alignToObject || vertical){
           flagsSet = 1; }
                          
-                    
+                         
+
 if (flagsSet)
 {
-		/*for (int i = 1; flags[i]; i++)  // flags from original code - for reference
+	//string flags = argv[firstInList];
+	//if ((flags[0] == '-') || flagsSet) //PAB
+	//{
+		//if (strlen(flags) == 1) { dlgMessageBox("No flags.\n"); exit(1); }
+		/*for (int i = 1; flags[i]; i++)
 		{			
 			switch (flags[i])
 			{
@@ -416,33 +388,30 @@ if (flagsSet)
 				case 'v' : alignOnVerticalLine = true; break;
 				//default  : dlgMessageBox("No such flag.\n"); exit(3);
 			}
-		}  */
+		}*/
 		firstInList++;  // what does this do? Pointer to flag?
 		if (((alignOnHorizontalLine && alignOnVerticalLine) || (incrementFlag && distributeFlag) || (alignToGridFlag && alignToObjectFlag) || (alignToComponentFlag && alignToObjectFlag) || (alignToGridFlag && alignToComponentFlag)) && !dlgMessageBox("Illegal flag combination.\n")) exit(1);
 		if (incrementFlag)
 		{
 			if (incrementFlag  && !(IncrementAmtInMils) && !dlgMessageBox("No increment specified.\n")) exit(1);
-			board(brd) { 
-              if (IncrementAmtInMils != 0) increment = input2u(brd,real(IncrementAmtInMils)); //PAB
+			board(brd) { //increment = input2u(brd, strtod(argv[firstInList]));
+                          if (IncrementAmtInMils != 0) increment = input2u(brd,real(IncrementAmtInMils)); //PAB
             }
-         	 //firstInList++;  
+                        
+         			firstInList++;
 		}
 		if (alignToObjectFlag)
 		{
-			if (alignToObjectFlag  && (ObjectString == "")  && !dlgMessageBox("No object specified.\n")) exit(1);
+			if (alignToObjectFlag /*!(argc>firstInList)*/ && (ObjectString == "")  && !dlgMessageBox("No object specified.\n")) exit(1);
 			board(brd) { brd.elements(element) { if (element.name == ObjectString) xRefObject = element.x, yRefObject = element.y; } }
 			if ((xRefObject == INT_MAX && yRefObject == INT_MAX) && !dlgMessageBox("No such object.\n")) exit(1);
-			//firstInList++;
+			firstInList++;
 		}
+	//}
 	else;	// There are no flags therefore use the default align to bottommost/leftmost object in the direction with the most spread
 }
-
-if (alignToComponentFlag){
- mode = LIST;  
- }
-else{ 
-   mode = GROUP;
-}
+if (alignToComponentFlag) mode = LIST;   // (argc>firstInList) mode = LIST;  // don't understand this PAB
+else mode = GROUP;
 
 board(brd)
 {
@@ -495,8 +464,8 @@ board(brd)
 	}
 	else
 	{
-	    if (alignToObjectFlag) yAligned = yRefObject;			// Align on a horizontal line going through the reference object ?
-	    else brd.elements(element)								// Align on a horizontal line going through to the leftmost bottommost object
+	    if (alignToObjectFlag) yAligned = yRefObject;											// Align on a horizontal line going through the reference object ?
+	    else brd.elements(element)																// Align on a horizontal line going through to the leftmost bottommost object
 	    {
 		if ((mode == GROUP && ingroup(element)) || (mode == LIST && inList(element.name)))               //inList(element.name)))
 		{

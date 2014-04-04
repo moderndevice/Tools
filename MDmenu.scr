@@ -36,8 +36,10 @@ MENU 'Grid {\
                             Bottom : Display None bPlace Dimension;\
                           }\
               }'\
-      'Align : run tools/DialogAlign.ulp;'\
+      'ULP{\
+        AlignD: run tools/AlignD.ulp;|\
+        Snap: run tools/Snap.ulp;\
+        }'\
      'Fit : Window Fit;'\
      'NoFill : RIPUP @;'\
-      '---'\
      ;
