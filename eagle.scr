@@ -1,0 +1,70 @@
+# Modern Device Default Eagle Configuration Script
+# Your prefs may differ :)
+# This file can be used to configure the editor windows.
+#
+# Uncomment this if you want a set of useful default shortcuts!
+# SCRIPT default-assign.scr;
+
+# Put this in the Scripts folder and rename to eagle.scr
+
+BRD:
+MENU # '[designlink22.png] Search and order : Run designlink-order.ulp -general;'\
+#      '[pcb-service.png] PCB Service : Run pcb-service.ulp;';
+     
+# Menu Add Change Copy Delete Display Grid Group Move Name Quit Rect \
+# Route Script Show Signal Split Text Value Via Window ';' Wire Write Edit;
+
+Script tools/MDmenu.scr;
+Script tools/MDdefaultcolors.scr;
+
+#Get rid of the extra internal layers
+# Layer  -3 -4 -5 -6 -7 -8 -9 -10 -11 -12 -13 -14 -15
+
+
+#Setup Modern Device Defaults 
+Grid mil 5 on;
+Grid alt mil 1;
+
+SET SIZE_MENU 15 20 30 32 35 40 48 52 55 60 65 70 80 90;
+SET WIDTH_MENU 2 4 5 6 8 10 12 16 20 24 30 35 40 50 60 70;
+SET ISOLATE_MENU 4 5 6 7 8 9 10 11 12 14 16 18 20 24 30 36;  
+SET DRILL_MENU 6 8 9 10 12 14 20 28 30 32 35 39 60 95 106 120;
+Change ISOLATE 6; #minimum isolation value on flood plane
+Change Size 32; #Font size to start
+Change Font Vector; #Make text on board in vector font
+Change Ratio 15;
+Set WIRE_BEND 1; #Route with 45 degree angles
+Change Shape Round; #Make vias round
+Change Drill 12; #Make via drill 13mil
+Change Width 12; #Routing width default to 12mil
+
+#changes background color of board (and associated palette) to white
+SET PALETTE WHITE
+
+
+SCH:
+Grid .05;
+Change Width 0.006;
+#MENU '[designlink22.png] Search and order {\
+#                                          General : Run designlink-order.ulp -general; |\
+#                                          Schematic : Run designlink-order.ulp; \
+#                                          }'\
+;
+
+LBR:
+;
+
+DEV:
+Grid mil 5 2; Grid alt mil 1;
+
+SYM:
+Grid Default On;
+Change Width 0.010;
+
+PAC:
+Grid 5 5  On;
+Change Width mil 0.005;
+Change Size 0.050;
+
+
+
