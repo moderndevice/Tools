@@ -18,6 +18,7 @@ MENU 'Grid {\
              1-.25 : Grid mil 1 1; Grid alt mil .25; |\           
              5-1 : Grid mil 5 1; Grid alt mil 1; |\
              10-5 : Grid mil 10 1; Grid alt mil 5; |\
+             5m2-1 :  Grid mil 5 2; Grid alt mil 1; |\
              5m5-1 :  Grid mil 5 5; Grid alt mil 1; |\
              25-1 : Grid mil 25 1; Grid alt mil 1; |\
              25m2-5 : Grid mil 25 2; Grid alt mil 5; |\  
