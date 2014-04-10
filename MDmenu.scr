@@ -1,9 +1,5 @@
 # Command Menu Setup
-#
-# This is an example that shows how to set up a complex command menu,
-# including submenus and command aliases. To display the command menu in
-# the editor windows you have to activate the option 'Command texts'
-# in the 'Options/User Interface' menu.
+# Modern Device Menu mods - add your own!
 #
 # PAB: Grid Menu Example:
 # MenuItemName : Grid  units value multiple ; Grid alternate units value;
@@ -18,6 +14,7 @@ MENU 'Grid {\
              1-.25 : Grid mil 1 1; Grid alt mil .25; |\           
              5-1 : Grid mil 5 1; Grid alt mil 1; |\
              10-5 : Grid mil 10 1; Grid alt mil 5; |\
+             5m2 1 : Grid mil 5 2; Grid alt mil 1; |\
              5m5-1 :  Grid mil 5 5; Grid alt mil 1; |\
              25-1 : Grid mil 25 1; Grid alt mil 1; |\
              25m2-5 : Grid mil 25 2; Grid alt mil 5; |\  
@@ -27,19 +24,28 @@ MENU 'Grid {\
              Off : Grid Off;\
            }'\
      'Layers {\
+            TopOnTop   : set Option.LayerSequence 1 16 ; window; |\
+            BottomOnTop : set Option.LayerSequence 16 1 ; window; |\
             Top : Display None 1 17 18 21 27; |\
-            Top Text : Display None 17 18 21 20 27; |\
+            Top Text : Display None 21 25 29 121; |\
+            Bottom Text : Display None 22 26 30 122; |\
                 Copper Top : Display None Top Top Pads Vias; |\
                 Bottom    : Display None bstop Bottom Pads  Dimension; |\
                 Placeplan {\
-                            Top    : Display None tPlace Dimension; |\
-                            Bottom : Display None bPlace Dimension;\
+                            Top    : Display None 1 17 18 20; |\
+                            Bottom : Display None 16 17 18 20;\
                           }\
               }'\
       'ULP{\
         AlignD: run tools/AlignD.ulp;|\
         Snap: run tools/Snap.ulp;\
         }'\
-     'Fit : Window Fit;'\
-     'NoFill : RIPUP @;'\
-     ;
+     'View {\
+		Fit : Window Fit; |\
+		NoFill : RIPUP @; |\
+        Fill :  rats; |\
+        Pad Names : SET PAD_NAMES ON; |\
+        No Pad Nm : SET PAD_NAMES OFF; \
+     }';
+     
+     
