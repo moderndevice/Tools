@@ -3,7 +3,7 @@
 # This file can be used to configure the editor windows.
 #
 # Uncomment this if you want a set of useful default shortcuts!
-# SCRIPT default-assign.scr;
+SCRIPT default-assign.scr;
 
 # Put this in the Scripts folder and rename to eagle.scr
 
