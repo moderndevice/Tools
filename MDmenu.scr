@@ -27,14 +27,13 @@ MENU 'Grid {\
             TopOnTop   : set Option.LayerSequence 1 16 ; window; |\
             BottomOnTop : set Option.LayerSequence 16 1 ; window; |\
             Top : Display None 1 17 18 21 27; |\
+            Bottom    : Display None bstop Bottom Pads Vias Dimension; |\
             Top Text : Display None 21 25 29 121; |\
             Bottom Text : Display None 22 26 30 122; |\
-                Copper Top : Display None Top Top Pads Vias; |\
-                Bottom    : Display None bstop Bottom Pads  Dimension; |\
-                Placeplan {\
-                            Top    : Display None 1 17 18 20; |\
-                            Bottom : Display None 16 17 18 20;\
-                          }\
+            Copper Top : Display None Top Top Pads Vias; |\
+            Toggle T_Text :run  tools/toglays.ulp 20 25 121 |\
+            Toggle B_Text :run  tools/toglays.ulp 21 26 122 |\
+            Toggle Bitmaps :run  tools/toglays.ulp 200 201 202 203 204 205\
               }'\
       'ULP{\
         AlignD: run tools/AlignD.ulp;|\
