@@ -34,7 +34,7 @@ MENU 'Grid {\
             Toggle T_Text :run  tools/toglays.ulp 20 25 121 |\
             Toggle B_Text :run  tools/toglays.ulp 21 26 122 |\
             Toggle Bitmaps :run  tools/toglays.ulp 200 201 202 203 204 205\
-                 }'\
+         }'\
       'ULP{\
         AlignD: run tools/AlignD.ulp;|\
         Snap: run tools/Snap.ulp;\
