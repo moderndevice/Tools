@@ -22,7 +22,7 @@ display(foo);
 exit("");
 }
 
-for (int i = 1; i < (argc); i++){
+for (int i = 1; i <= (argc); i++){
 
 mylayer = strtod(argv[i]);
 

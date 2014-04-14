@@ -24,15 +24,17 @@ MENU 'Grid {\
              Off : Grid Off;\
            }'\
      'Layers {\
-            Top : Display None 1 17 18 21 23 25 ; |\
-            Bottom    : Display None bstop Bottom Pads Vias 24 Dimension; |\
-            Top Text : Display None 21 25 29 121; |\
-            Bottom Text : Display None 22 26 30 122; |\
-            Copper Top : Display None Top Top Pads Vias; |\
-            Toggle T_Text :run  tools/toglays.ulp 20 25 121 |\
-            Toggle B_Text :run  tools/toglays.ulp 21 26 122 |\
-            Toggle Bitmaps :run  tools/toglays.ulp 200 201 202 203 204 205 |\
-            Toggle Values :run  tools/toglays.ulp 27 |\
+            None : Display none; Display 20; |\
+            Top : run  tools/toglays.ulp  1 17 18 20 21 23 25 ; Display 20; |\
+            Bottom :run tools/toglays.ulp 16 22 24 26 30 ; Display 20; |\
+            T_Text :run  tools/toglays.ulp 21 25 29 121; |\
+            B_Text :run  tools/toglays.ulp 22 26 30 122;|\
+            T Origins :run tools/toglays.ulp 23; |\
+            B Origins :run tools/toglays.ulp 24; |\
+            Copper Top : run tools/toglays.ulp 1; |\
+            Copper Bot. : run tools/toglays.ulp 16; |\
+            Bitmaps :run  tools/toglays.ulp 200 201 202 203 204 205 |\
+            Values :run  tools/toglays.ulp 27 |\
             TopOnTop   : set Option.LayerSequence 1 16 ; window; |\
             BottomOnTop : set Option.LayerSequence 16 1 ; window; \
          }'\
