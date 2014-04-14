@@ -24,18 +24,16 @@ MENU 'Grid {\
              Off : Grid Off;\
            }'\
      'Layers {\
-            TopOnTop   : set Option.LayerSequence 1 16 ; window; |\
-            BottomOnTop : set Option.LayerSequence 16 1 ; window; |\
             Top : Display None 1 17 18 21 27; |\
             Top Text : Display None 21 25 29 121; |\
             Bottom Text : Display None 22 26 30 122; |\
-                Copper Top : Display None Top Top Pads Vias; |\
-                Bottom    : Display None bstop Bottom Pads  Dimension; |\
-                Placeplan {\
-                            Top    : Display None 1 17 18 20; |\
-                            Bottom : Display None 16 17 18 20;\
-                          }\
-              }'\
+            Toggle T Value : run tools/toglay.ulp 27; |\
+            Toggle Bitmaps : run tools/toglay.ulp 200 203 204 205 206; |\
+            Toggle Copper Top : run tools/toglay.ulp 1; |\
+            Toggle Copper Bot : run tools/toglay.ulp 16; |\
+            TopOnTop : set Option.LayerSequence 1 16 ; window; |\
+            BottomOnTop : set Option.LayerSequence 16 1 ; window; \
+             }'\
       'ULP{\
         AlignD: run tools/AlignD.ulp;|\
         Snap: run tools/Snap.ulp;\
