@@ -16,17 +16,15 @@ dlgMessageBox(s);
 return;
 }
 
-if (argc < 1) { /* Should be ulp + arg */
+if (argc < 2) { /* Should be ulp + arg */
 sprintf(foo, "bad argc %d", argc);
 display(foo);
 exit("");
 }
 
-for (int i = 1; i < argc; i++){
+for (int i = 1; i <= (argc); i++){
 
 mylayer = strtod(argv[i]);
-
-dlgMessageBox(sprintf("%d",mylayer));
 
 if (board) board(B) {
 B.layers(L) {

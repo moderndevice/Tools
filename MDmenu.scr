@@ -24,24 +24,28 @@ MENU 'Grid {\
              Off : Grid Off;\
            }'\
      'Layers {\
-            Toggle Top : run tools/toglays.ulp 1 17 18 21 27; |\
-            Toggle T Text : run tools/toglays.ulp 21 25 29 121; |\
-            Toggle B Text : run tools/toglays.ulp 22 26 30 122; |\
-            Toggle T Value : run tools/toglays.ulp 27; |\
-            Toggle Copper Top : run tools/toglays.ulp 1; |\
-            Toggle Copper Bot : run tools/toglays.ulp 16; |\
-            Toggle Bitmaps : run tools/toglays.ulp 200 203 204 205 206; |\
+            None : Display none; Display 20; |\
+            Top : run  tools/toglays.ulp  1 17 18 20 21 23 25 ; Display 20; |\
+            Bottom :run tools/toglays.ulp 16 22 24 26 30 ; Display 20; |\
+            T_Text :run  tools/toglays.ulp 21 25 29 121; |\
+            B_Text :run  tools/toglays.ulp 22 26 30 122;|\
+            T Origins :run tools/toglays.ulp 23; |\
+            B Origins :run tools/toglays.ulp 24; |\
+            Copper Top : run tools/toglays.ulp 1; |\
+            Copper Bot. : run tools/toglays.ulp 16; |\
+            Bitmaps :run  tools/toglays.ulp 200 201 202 203 204 205 |\
+            Values :run tools/toglays.ulp 27 |\
             TopOnTop : set Option.LayerSequence 1 16 ; window; |\
             BottomOnTop : set Option.LayerSequence 16 1 ; window; \
-             }'\
+         }'\
       'ULP{\
         AlignD: run tools/AlignD.ulp;|\
         Snap: run tools/Snap.ulp;\
         }'\
      'View {\
+		Fit : Window Fit; |\
 		NoFill : RIPUP @; |\
-        Rats :  rats; |\
-        Fit : Window Fit; |\
+        Fill :  rats; |\
         Pad Names : SET PAD_NAMES ON; |\
         No Pad Nm : SET PAD_NAMES OFF; \
      }';
