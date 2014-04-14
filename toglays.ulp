@@ -1,0 +1,46 @@
+
+
+#usage "<qt><b>togmlay.ulp layernum"
+"<p>Toggle visibility of the specified layers"
+"<p>"
+"<author>Author: Bill Westfield westfw@assorted modded for multiple args by Paul Badger</author></qt>"
+
+int mylayer;
+string foo="";
+string nfoo="";
+string buf;
+
+
+void display (string s) {
+dlgMessageBox(s);
+return;
+}
+
+if (argc < 2) { /* Should be ulp + arg */
+sprintf(foo, "bad argc %d", argc);
+display(foo);
+exit("");
+}
+
+for (int i = 1; i < (argc); i++){
+
+mylayer = strtod(argv[i]);
+
+if (board) board(B) {
+B.layers(L) {
+	if (L.number == mylayer) {
+		if (L.visible) {
+			foo = foo + "display -" + L.name + " ; ";
+			//exit("display -" + L.name +"; ");
+		} 
+		else 
+		{
+		nfoo = nfoo + "display " + L.name + " ; ";
+			//exit("display " + L.name + "; ");
+        }                   
+    }
+  }
+}
+}
+//dlgMessageBox(foo + nfoo);
+exit(foo + nfoo);
