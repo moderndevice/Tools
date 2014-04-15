@@ -1,12 +1,13 @@
 
 
-#usage "<qt><b>togmlay.ulp layernum"
+#usage "<qt><b>togmlays.ulp layernum layernum ... "
 "<p>Toggle visibility of the specified layers"
 "<p>"
-"<author>Author: Bill Westfield westfw@assorted modded for multiple args by Paul Badger</author></qt>"
+"<author>Author: Paul Badger modded for multiple args by Bill Westfield westfw@assorted</author></qt>"
 
 int mylayer;
 string foo="";
+string buff="";
 string nfoo="";
 string buf;
 
@@ -17,7 +18,7 @@ return;
 }
 
 if (argc < 2) { /* Should be ulp + arg */
-sprintf(foo, "bad argc %d", argc);
+sprintf(foo, "no layer %d found", argc);
 display(foo);
 exit("");
 }
@@ -30,17 +31,19 @@ if (board) board(B) {
 B.layers(L) {
 	if (L.number == mylayer) {
 		if (L.visible) {
-			foo = foo + "display -" + L.name + " ; ";
-			//exit("display -" + L.name +"; ");
+		// I'm using layer numbers here instead of names because of bizzare eagle bug
+		// "Display Top;" on my machine stopped working, but layer numbers still work fine.
+	        
+		    sprintf(buff, "%d", mylayer);
+			foo = foo + "display -" + buff + "; ";
 		} 
 		else 
 		{
-		nfoo = nfoo + "display " + L.name + " ; ";
-			//exit("display " + L.name + "; ");
+		sprintf(buff, "%d", mylayer);
+		nfoo = nfoo + "display " + buff + "; ";
         }                   
     }
   }
 }
 }
-//dlgMessageBox(foo + nfoo);
 exit(foo + nfoo);
