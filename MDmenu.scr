@@ -31,6 +31,7 @@ MENU 'Grid {\
             B_Text :run  tools/toglays.ulp 22 26 30 122;|\
             T Origins :run tools/toglays.ulp 23;|\
             B Origins :run tools/toglays.ulp 24;|\
+            Outline :run tools/toglays.ulp 20;|\
             Copper T only : run tools/toglays.ulp 1; window;|\
             Copper B only:  run tools/toglays.ulp 16;|\
             Bitmaps :run  tools/toglays.ulp 200 201 202 203 204 205|\
