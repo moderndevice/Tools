@@ -25,8 +25,8 @@ MENU 'Grid {\
            }'\
      'Layers {\
             None : Display none;|\
-            Top : run  tools/toglays.ulp 1 17 18 20 21 23 25 ; Display 20;|\
-            Bottom :run tools/toglays.ulp 16 22 24 26 30 ; Display 20;|\
+            Top : run  tools/toglays.ulp 1 17 18 20 21 25 121; Display 20;|\
+            Bottom :run tools/toglays.ulp 16 22 26 30 122; Display 20;|\
             T_Text :run  tools/toglays.ulp 21 25 29 121;|\
             B_Text :run  tools/toglays.ulp 22 26 30 122;|\
             T Origins :run tools/toglays.ulp 23;|\
@@ -35,13 +35,14 @@ MENU 'Grid {\
             Copper T only : run tools/toglays.ulp 1; window;|\
             Copper B only:  run tools/toglays.ulp 16;|\
             Bitmaps :run  tools/toglays.ulp 200 201 202 203 204 205|\
+            Vias :run  tools/toglays.ulp 18;|\
             Values :run tools/toglays.ulp 27|\
             TopOnTop : set Option.LayerSequence 1 16 ; window;|\
             BottomOnTop : set Option.LayerSequence 16 1 ; window;\
          }'\
       'ULP{\
-        AlignD: run tools/AlignD.ulp;|\
-        Snap: run tools/Snap.ulp;\
+        AlignD: run tools/alignD.ulp;|\
+        Snap: run snap.ulp;\
         }'\
      'View {\
 		Fit : Window Fit; |\
