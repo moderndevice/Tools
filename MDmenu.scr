@@ -40,7 +40,8 @@ MENU 'Grid {\
          }'\
       'ULP{\
         AlignD: run tools/AlignD.ulp;|\
-        Snap: run tools/Snap.ulp;\
+        Snap: run tools/Snap.ulp;|\
+        Ntext: run tools/normalize-textPB.ulp;\
         }'\
      'View {\
 		Fit : Window Fit; |\

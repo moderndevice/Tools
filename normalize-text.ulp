@@ -31,9 +31,7 @@ real text_thickness = 8.0; // Text thickness for all texts
 int text_ratio; // Calculated text ratio
 
 int NUM_LAYERS = 8;
-int silk_screen_layers[] = {LAYER_TPLACE, LAYER_BPLACE, LAYER_TNAMES,
-                          LAYER_BNAMES, LAYER_TVALUES, LAYER_BVALUES,
-                          LAYER_TDOCU, LAYER_BDOCU};
+int silk_screen_layers[] = {21, 23, 25};
 enum {UNIT_MIL, UNIT_MM};
 int units = UNIT_MIL;
 

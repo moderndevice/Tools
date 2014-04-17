@@ -86,7 +86,7 @@ int alignment, xRefObject = INT_MAX, yRefObject = INT_MAX, xAligned = INT_MAX, y
 real distance, increment, xAvg = 0.0, yAvg = 0.0;
 
 int Result = 0;
-// this is a file where param values are stored - it would be better in static memory but
+// this is a file where param values are stored - params would be better in static memory but
 // that is not available to ULPs at this time
 string ULPfilename = path_ulp[0] + '/' + "AlignD.ULP.txt"; 
 
@@ -224,8 +224,8 @@ Result = dlgDialog("AlignD ULP") {
            dlgCell(7, 1) {  dlgStringEdit(ObjectString); };
            dlgCell(8, 1) {  dlgRadioButton("&Align Components in Group", alignComponents) if (alignComponents ) /*dlgLogic(3)*/; };
            dlgCell(9, 1) {  dlgRadioButton("&Align Components in List", alignComponents) if (alignComponents ) /*dlgLogic(3)*/ ;};
-           dlgCell(10, 1) { dlgLabel("<font size=-1>Components separated by spaces. &quot;*&quot; is wildcard. </font>"); };
-           dlgCell(11, 1) {  dlgStringEdit(ComponentText); };
+           dlgCell(10, 1){ dlgLabel("<font size=-1>Components separated by spaces. &quot;*&quot; is wildcard. </font>"); };
+           dlgCell(11, 1){  dlgStringEdit(ComponentText); };
            dlgCell(12, 1){  dlgCheckBox("&Use Regular Expressions", dlgRegEx); };   
            dlgCell(13, 1){  dlgCheckBox("&Distribute", distribute) if (distribute) dlgIncrement = 0; };
            dlgCell(14, 1){  dlgCheckBox("&Increment (in mils)", dlgIncrement) if (dlgIncrement) distribute = 0; };
