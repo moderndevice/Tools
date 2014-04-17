@@ -152,6 +152,17 @@ void ProcessTexts(real size, int ratio) {
     cmd += "GRID LAST;";
 }
 
+void help(void) {
+  dlgDialog("HELP Normalize-Text") {
+    dlgLabel(usage);
+    dlgHBoxLayout {
+      dlgStretch(0);
+      dlgPushButton("+OK") dlgAccept();
+      dlgStretch(0);
+    }
+  };
+}
+
 
 
 void saveParams(){      
@@ -244,7 +255,7 @@ if (board) {
              // Buttons
             dlgHBoxLayout {
             dlgStretch(1);
-            dlgPushButton("Help / Credits") dlgAccept();
+            dlgPushButton("Help") help();
             dlgPushButton("-Cancel") dlgReject();
             dlgPushButton("+Normalize") dlgAccept();
             

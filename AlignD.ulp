@@ -145,7 +145,7 @@ output(ULPfilename,"wt"){
 }
 
 void help(void) {
-  dlgDialog("HELP LayerSequence") {
+  dlgDialog("HELP AlignD") {
     dlgLabel(usage);
     dlgHBoxLayout {
       dlgStretch(0);
