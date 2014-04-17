@@ -21,17 +21,27 @@
 #require 4.13
 
 string VERSION = "1.0";
-
 int result = 0; // Dialog result
-
 string str; // Temporary string
-string cmd = "SET UNDO_LOG OFF;\n"; // Script command to execute
+string layerText = "layers to change";
+int numberOfLayers;
+string LayerList[];  // two dim text array (list) 
+string cmd = ""; // Script command to execute
 real text_size = 40.0; // Text size for all texts
 real text_thickness = 8.0; // Text thickness for all texts
 int text_ratio; // Calculated text ratio
+string outputFileName = "NormTextTempFile.scr";
+string str_DBbools= "000";
+string inString;
+string CompHistory[];  //history for component box
 
+// this is a scratch file where param values are stored - 
+// params would be better in static memory but
+// that is not available to ULPs at this time
+string ULPfilename = path_ulp[0] + '/' + "NormTextScratchFile.ULP.txt"; 
+int DBbools[];
 int NUM_LAYERS = 8;
-int silk_screen_layers[] = {21, 23, 25};
+int silk_screen_layers[];
 enum {UNIT_MIL, UNIT_MM};
 int units = UNIT_MIL;
 
@@ -104,7 +114,7 @@ void ProcessTexts(real size, int ratio) {
     }
     cmd += str;
 
-    cmd += "DISPLAY NONE tPlace bPlace;\n";
+   // cmd += "DISPLAY NONE tPlace bPlace;\n";
 
     board(B) {
         B.elements(E) {
@@ -137,12 +147,59 @@ void ProcessTexts(real size, int ratio) {
             ResizeText(T, size, ratio);
         }
         
-        ResetVisible(B);
+       // ResetVisible(B);
     }
-    cmd += "GRID LAST;\nSET UNDO_LOG ON;\n";
+    cmd += "GRID LAST;";
 }
 
+
+
+void saveParams(){      
+DBbools[0] = units;
+DBbools[1] = 0; //unused
+DBbools[2] = 0; //unused
+
+for (int i = 0; i < 3; i++){
+      if  (DBbools[i]) str_DBbools[i] = '1';
+      else str_DBbools[i] = '0';
+}
+
+output(ULPfilename,"wt"){
+      printf("Bools:%s\n", str_DBbools);
+      printf("ObStr:%f\n", text_size);
+      printf("CmpSt:%f\n", text_thickness);
+      printf("IncMs:%s\n", layerText);
+    }
+}
+
+void initParamFile(){
+int size = filesize(ULPfilename);
+if 	(!size){output(ULPfilename,"wt")
+      	printf("000");
+      	}
+} 
+
+void getParams(){
+int i = 0;
+string Sarray[];
+int nStrings = fileread(inString, ULPfilename);
+nStrings = strsplit(Sarray, inString, '\n');
+
+text_size = strtod(strsub(Sarray[1], 6, strlen(Sarray[1])));
+text_thickness = strtod(strsub(Sarray[2], 6, strlen(Sarray[2])));
+layerText = strsub(Sarray[3], 6, strlen(Sarray[3]));
+
+
+//Parse out Boolean checkbox info
+units =             Sarray[0][i++ + 6] - '0'; 
+DBbools[1] =        Sarray[0][i++ + 6] - '0';  // future use
+DBbools[2] =        Sarray[0][i++ + 6] - '0';  // future use
+}
+
+
 /* ------------- MAIN ROUTINE --------------- */
+
+getParams();
 if (board) {
     result = dlgDialog("Normalize silkscreen text sizes") {
         sprintf(str,"<qt><H3><P>Normalize silkscreen text sizes %s</P></H3>"+
@@ -155,29 +212,54 @@ if (board) {
         // Options
         dlgHBoxLayout {
             dlgGroup("Output units") {
-                dlgRadioButton("m&il",units) {text_size = 40.0; text_thickness = 0.008; dlgRedisplay(); }
-                dlgRadioButton("&mm",units) {text_size = 1.0; text_thickness = 0.2; dlgRedisplay(); }
+                dlgRadioButton("m&il",units){text_size = text_size /.0254; text_thickness = text_thickness / .0254; dlgRedisplay(); }
+                dlgRadioButton("&mm",units){text_size = text_size *.0254; text_thickness = text_thickness * .0254; dlgRedisplay(); }
             }
-            dlgSpacing(20);
+            dlgSpacing(10);
             dlgGridLayout {
                 dlgCell(0,0) dlgLabel("Text size:");
                 dlgCell(0,1) dlgRealEdit(text_size,0.5,2000.0);
 
-
                 dlgCell(1,0) dlgLabel("Text Thickness:");
                 dlgCell(1,1) dlgRealEdit(text_thickness,0.05,500.0);
+                               
+                dlgCell(2,0) dlgLabel("<font size=-1>Layer Numbers to Change:<br />separated by spaces</font>");
+                dlgCell(2,1) dlgStringEdit(layerText);
             }
         }
 
-        // Buttons
-        dlgHBoxLayout {
+         dlgVBoxLayout {
+            dlgStretch(0);
+            dlgLabel("<font size=-1>Layer Reference:<br /> \
+            21   tPlace<br /> \
+            22   bPlace<br /> \
+            25   tNames<br /> \
+            26   bNames<br /> \
+            27   tValues<br /> \
+            28    bValues<br /> \
+            121   _tSilk<br /> \
+            122   _bSilk<br /> \
+            </font>"); }
+            
+             // Buttons
+            dlgHBoxLayout {
             dlgStretch(1);
-            dlgPushButton("+Normalize") dlgAccept();
+            dlgPushButton("Help / Credits") dlgAccept();
             dlgPushButton("-Cancel") dlgReject();
+            dlgPushButton("+Normalize") dlgAccept();
+            
         }
     };
 
     if (!result) exit(0);
+    
+if (result == 1){  // dialog exited with "OK"
+    saveParams();
+    numberOfLayers = strsplit(LayerList, layerText, ' ');   // parse out layer list
+	for (int i; i<numberOfLayers; i++){
+			silk_screen_layers[i] = strtol(LayerList[i]);
+		}
+}
 
     text_ratio = int(round((text_thickness / text_size) * 100.0)) + 1;
     if (text_ratio > 31) {
