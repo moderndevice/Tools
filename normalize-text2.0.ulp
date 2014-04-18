@@ -214,9 +214,10 @@ getParams();
 if (board) {
 
     result = dlgDialog("Normalize layer text sizes") {
+       
         sprintf(str,"<qt><H3><P>Normalize text sizes %s</P></H3>"+
                     "<P><B>By Tennessee Carmel-Veilleux, Paul Badger</B></P>"+
-                    "<HR><P>This ULP normalizes all the text on the listed layers to "+
+                    "<P>This ULP normalizes all the text on the listed layers to "+
                     "the specified size and thickness. The ratio is automatically calculated " + 
                     "from the size and thickness.</P></qt>", VERSION);
         dlgLabel(str);
@@ -227,7 +228,7 @@ if (board) {
                 dlgRadioButton("m&il",units){text_size = text_size /.0254; text_thickness = text_thickness / .0254; dlgRedisplay(); }
                 dlgRadioButton("&mm",units){text_size = text_size *.0254; text_thickness = text_thickness * .0254; dlgRedisplay(); }
             }
-            dlgSpacing(5);
+            dlgSpacing(1);
             dlgGridLayout {
                 dlgCell(0,0) dlgLabel("Text size:");
                 dlgCell(0,1) dlgRealEdit(text_size,0.5,2000.0);

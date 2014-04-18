@@ -42,12 +42,12 @@ MENU 'Grid {\
       'ULP{\
         AlignD: run tools/AlignD.ulp;|\
         Snap: run tools/Snap.ulp;|\
-        Ntext: run tools/normalize-textPB.ulp;\
+        NormText: run tools/normalize-text2.0.ulp;\
         }'\
      'View {\
 		Fit : Window Fit; |\
+		Rats :  rats; |\
 		NoFill : RIPUP @; |\
-        Fill :  rats; |\
         Pad Names : SET PAD_NAMES ON; |\
         No Pad Nm : SET PAD_NAMES OFF; \
      }';
