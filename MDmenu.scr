@@ -34,7 +34,8 @@ MENU 'Grid {\
             Outline :run tools/toglays.ulp 20;|\
             Copper T only : run tools/toglays.ulp 1; window;|\
             Copper B only:  run tools/toglays.ulp 16;|\
-            Bitmaps :run  tools/toglays.ulp 200 201 202 203 204 205|\
+            T Bitmaps :run  tools/toglays.ulp 200 201 202 203 204 205 206 207 208 209 210|\
+            B Bitmaps :run  tools/toglays.ulp 211 212 213 214|\
             Values :run tools/toglays.ulp 27|\
             TopOnTop : set Option.LayerSequence 1 16 ; window;|\
             BottomOnTop : set Option.LayerSequence 16 1 ; window;\
