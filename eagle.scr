@@ -52,19 +52,19 @@ Change Width 0.006;
 ;
 
 LBR:
-;
+Grid mil 5 5; Grid alt mil 1;
 
 DEV:
 Grid mil 5 2; Grid alt mil 1;
 
 SYM:
-Grid Default On;
+Grid mil 50 on;
 Change Width 0.010;
 
 PAC:
-Grid 5 5  On;
-Change Width mil 0.005;
-Change Size 0.050;
+Grid mil 5 5 on;
+Change Width 12mil;
+Change Size 50mil;
 
 
 

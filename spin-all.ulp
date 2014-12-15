@@ -1,0 +1,129 @@
+#usage "<b>Set spin flag on all (smashed) texts</b>\n"
+       "<p>"
+       "Generates a command sequence which set spin flag at all texts."
+       "RUN spin-all [ON | OFF]<br>"
+       "If no option used, the default is ON.<br>"
+       "Option ON OFF are not case sensitive.<br>"
+       "<p>"
+       "<author>Author: support@cadsoft.de</author>"
+
+// THIS PROGRAM IS PROVIDED AS IS AND WITHOUT WARRANTY OF ANY KIND, EXPRESSED OR IMPLIED
+#require 5.1200
+
+string Version = "1.0";   // 2009-01-15  alf@cadsoft.de
+int test = 0;
+
+int onoff = 0;
+if (strupr(argv[1]) == "ON") onoff = 0;
+if (strupr(argv[1]) == "OFF") onoff = 1;
+
+int    tx[], ty[], tl[], ts[], index[];
+real    ta[];
+string tv[];
+int    cnttext = 0;
+int    cnt_unsmashed = 0;
+int    lVisible[];
+int    changed = 0;
+
+string cmd;
+string h;
+string scriptfile;
+
+
+/*** Functions ***/
+void header(void) {
+  sprintf(cmd, "# Exported from %s\n# by %s, %s\n", filesetext(scriptfile, ".brd"), filename(argv[0]), EAGLE_SIGNATURE );
+//  cmd += "SET UNDO_LOG OFF;\n";         // advisable for speed reasons
+  cmd += "GRID mm;\n";
+}
+
+
+void addlist(UL_TEXT T) {
+  ta[cnttext] = T.angle;
+  tl[cnttext] = T.layer;
+  tx[cnttext] = T.x;
+  ty[cnttext] = T.y;
+  ts[cnttext] = T.spin;
+  tv[cnttext] = T.value;
+  cnttext++;
+  return;
+}
+
+
+if (board) board(B) {
+  B.layers(L) lVisible[L.number] = L.visible;
+  scriptfile = filesetext(B.name, ".scr");
+  header();
+  B.texts(T) {    // Texts in Board
+    addlist(T);
+  }
+  B.elements(E) {
+    E.texts(T) {                // *** smased texts in elements ***
+      if (T.value) addlist(T);  // only texts with value,
+    }
+    E.package.texts(T) {        // *** non smased
+      cnt_unsmashed++;
+    }
+  }
+  sort(cnttext, index, tl);
+  int actlayer = 0;
+  for(int n = 0; n < cnttext; n++) {
+    if (actlayer != tl[index[n]]) {
+      actlayer = tl[index[n]];
+      sprintf(h, "DISPLAY NONE %d;\n", actlayer);
+      cmd+=h;
+    }
+    if (ts[index[n]] == onoff || ta[index[n]] != 0.0) {
+      sprintf(h, "ROTATE =SR0 (%.4f %.4f);\n",
+                   u2mm(tx[index[n]]), u2mm(ty[index[n]]) );
+
+      cmd += h;
+      changed++;
+    }
+  }
+  string info;
+  if (cnt_unsmashed) sprintf(info, "%d unsmached texts found.", cnt_unsmashed);
+  if (!changed) {
+    dlgMessageBox("No changes made.\n\n"+info, "OK");
+    exit(0);
+  }
+  // prepare display mode
+  cmd += "DISPLAY NONE ";
+  for(int l = 1; l < 255; l++) {
+    if (lVisible[l]) {
+      sprintf(h, " %d", l);
+      cmd += h;
+    }
+  }
+  cmd += ";\n";
+  cmd += "SET UNDO_LOG ON;\n";
+  cmd += "GRID LAST;\n";
+  //  EditBox
+    if (test) {
+    int Result = dlgDialog("Spin all texts") {
+      dlgHBoxLayout {
+        dlgTextEdit(cmd);
+        dlgVBoxLayout {
+          dlgSpacing(300);
+        }
+      }
+      dlgHBoxLayout {
+        dlgSpacing(500);
+      }
+      dlgLabel(info);
+      dlgHBoxLayout {
+        dlgPushButton("+&Execute") dlgAccept();
+        dlgPushButton("-&Cancel") dlgReject();
+        dlgStretch(1);
+      }
+    };
+    if (Result == 0) exit(0);
+  }
+  output(scriptfile, "wtD") printf("%s", cmd);
+  exit("SCRIPT '" + scriptfile + "';");
+}
+
+else {
+  dlgMessageBox("Start this ULP in a board.", "OK");
+  exit(-1);
+}
