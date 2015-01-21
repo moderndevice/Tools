@@ -32,7 +32,7 @@ MENU 'Grid {\
             No-Rats : RIPUP @; |\
             Top : run  tools/toglays.ulp 1 17 18 20 21 23 25 ; Display 20;|\
             Bottom :run tools/toglays.ulp 16 22 24 26 30 ; Display 20;|\
-            T_Text :run  tools/toglays.ulp 21 25 29 121;|\
+            T_Text :run  tools/toglays.ulp 21 25 121;|\
             B_Text :run  tools/toglays.ulp 22 26 30 122;|\
             T Origins :run tools/toglays.ulp 23;|\
             B Origins :run tools/toglays.ulp 24;|\
