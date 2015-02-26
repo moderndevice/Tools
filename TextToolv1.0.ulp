@@ -1,0 +1,424 @@
+/****************************************************************************************
+*                                                                                       *
+*   Normalize silkscreen text sizes                                                     *
+*                                                                                       *
+*   Filename: normalize-text.ulp                                                        *
+*   Version: 2.0                                                                        *
+*   Author: Tennessee Carmel-Veilleux                                                   *
+*   Date: March 31st 2005, Dialog mods April 2014 Paul Badgder                          *                                                    *
+*                                                                                       *                                                                                       *
+*   This ULP program smashes all texts on the listed layers. It then normalizes the     *
+*   texts so that they all have the same size and thickness. Ratio is calculated from   *
+*   the desired thickness.                                                              *
+*                                                                                       *
+****************************************************************************************/
+#usage "<b>Normalize silkscreen text sizes v2.0</b><HR>\n"
+       "<p>This ULP program smashes all texts on the listed layers. It then normalizes the "
+       "texts so that they all have the same size and thickness. Ratio is calculated from "
+       "the desired thickness. Listed layers will be made visible. This is changed from the "
+       "behavior of v. 1 of normalize-text.ulp.</p>"
+       "<author>Author: Tennessee Carmel-Veilleux, 2005<br />dialog modifcations, 2014 "
+       "Paul Badger paul@moderndevice.com</author>"
+#require 4.13
+
+string VERSION = "2.0";
+int result = 0; // Dialog result
+string str; // Temporary string
+string layerText = "25 26";
+int numberOfLayers;
+string LayerList[];  // two dim text array (list) 
+string cmd = "";     // Script command to execute
+real text_size = 40.0; // Text size for all texts
+real text_thickness = 6.0; // Text thickness for all texts
+int text_ratio; // Calculated text ratio
+string outputFileName = "NormTextTempFile.scr";
+// scratch file for user parameters
+string ULPfilename = path_ulp[0] + '/' + "NormTextScratchFile.ULP.txt"; 
+string str_DBbools= "000";
+string inString;
+int DBbools[];
+int NUM_LAYERS = 8;
+int silk_screen_layers[];
+enum {UNIT_MIL, UNIT_MM};
+int units = UNIT_MIL;
+int normText=1, normSize, normSpin=1, normHandles=1, align=0;
+int verticalPos=0, horizontalPos=0, foo=2;
+string Text_alignments[]={"bottom-left","bottom-center","bottom-right","center-left","center","center-right","top-left","top-center","top-right"};
+
+
+/* ------------- UTILITY FUNCTIONS --------------- */
+
+//
+// Redisplays the layers that were visible when the ULP was started
+// commented out in v2.0
+
+void ResetVisible(UL_BOARD B) {
+    sprintf(str, "DISP NONE;\nDISP ");
+    cmd += str;
+    B.layers(L) {
+        if (L.visible) {
+            sprintf(str, "%d ", L.number);
+            cmd += str;
+        }
+    }
+    cmd += ";\n";
+}
+
+//
+// Returns 1 if a layer is a listed layer
+//
+
+int SilkScreenText(int layer) {
+    int i;
+    int found = 0;
+    for (i = 0; i < NUM_LAYERS; i++) {
+        if (layer == silk_screen_layers[i]) found = 1;
+    }
+
+    return found;
+}
+
+//
+// Resizes a text element to the specified size and ratio
+//
+void ResizeText(UL_TEXT T, real size, int ratio) {
+    if (SilkScreenText(T.layer)) {
+    
+    if (normText){
+        switch (units) {
+            case UNIT_MIL:
+                sprintf(str,"CHANGE SIZE %.3f (%.3f %.3f);\nCHANGE RATIO %d (%.3f %.3f);\n",
+                        size, u2mil(T.x), u2mil(T.y), ratio, u2mil(T.x), u2mil(T.y));
+                break;
+                
+            case UNIT_MM:
+            
+                sprintf(str,"CHANGE SIZE %.3f (%.3f %.3f);\nCHANGE RATIO %d (%.3f %.3f);\n",
+                        size, u2mm(T.x), u2mm(T.y), ratio, u2mm(T.x), u2mm(T.y));
+                       
+                break;
+        }
+        
+        cmd += str;
+        }
+        
+        if (normSpin){   // sets spin on all texts - still broken at the moment
+        
+        switch (units) {
+            case UNIT_MIL:
+                
+                   sprintf(str, "ROTATE SR0 (%.4f %.4f);\n",
+                   u2mil(T.x), u2mil(T.y) );
+                     
+                break;
+            case UNIT_MM:
+                   sprintf(str, "ROTATE SR0 (%.4f %.4f);\n",
+                   u2mm(T.x), u2mm(T.y) );
+                        
+                break;
+        }        
+        cmd += str;
+    }
+    
+    if (normHandles){
+    
+        /* ALIGN_BOTTOM_LEFT bottom/left aligned
+		ALIGN_BOTTOM_CENTER bottom/centeraligned
+		ALIGN_BOTTOM_RIGHT bottom/right aligned
+		ALIGN_CENTER_LEFT center/left aligned
+		ALIGN_CENTER centered
+		ALIGN_CENTER_RIGHT center/right aligned
+		ALIGN_TOP_LEFT top/left aligned
+		ALIGN_TOP_CENTER top/center aligned
+		ALIGN_TOP_RIGHT top/right aligned */                      
+ 
+   align = (3 * verticalPos) + horizontalPos;
+   
+ 
+   switch (units) {  
+       case UNIT_MIL:
+       
+              sprintf(str, "ROTATE =SR0 (%.4f %.4f);\n",
+                  u2mil(T.x), u2mil(T.y) );  
+                  
+      cmd += str; 
+       
+       sprintf(str, "Change align %s (%.4f %.4f);\n", 
+       Text_alignments[align],  u2mil(T.x), u2mil(T.y) ); 
+       
+       
+       
+         cmd += str; 
+  
+
+      break;
+                
+                
+    case UNIT_MM:
+       sprintf(str,"CHANGE ALIGN %d (%.3f %.3f);\n",
+       align, u2mm(T.x), u2mm(T.y)); 
+       
+       cmd += str; 
+       
+       sprintf(str, "ROTATE =SR0 (%.4f %.4f);\n",
+                  u2mm(T.x), u2mm(T.y) );  
+                  
+       cmd += str; 
+           
+       break;
+      }    
+    }  
+  }
+}
+
+
+
+//
+// Smashes all parts that have an associated package on the board and resize
+// all text to SIZE and RATIO.
+// 
+void ProcessTexts(real size, int ratio) {
+    // Display the origins of components
+    switch (units) {
+        case UNIT_MIL:
+            sprintf(str,"GRID MIL 1;\n");
+            break;
+        case UNIT_MM:
+            sprintf(str,"GRID MM 0.1;\n");
+            break;
+    }
+    cmd += str;
+
+for (int i = 0; i < numberOfLayers; i++){
+   cmd += "DISPLAY " + LayerList[i] + ";\n";
+   }
+   
+
+    board(B) {
+        B.elements(E) {
+            if (E.package) {
+                // Smash the package to make sure text is CHANGE-able
+                switch (units) {
+                    case UNIT_MIL:
+                        sprintf(str,"SMASH (%.3f %.3f);\n", u2mil(E.x), u2mil(E.y));
+                        break;
+                    case UNIT_MM:
+                        sprintf(str,"SMASH (%.3f %.3f);\n", u2mm(E.x), u2mm(E.y));
+                        break;
+                }
+                cmd += str;
+
+                // Change smashed texts
+                E.texts(T) {
+                    ResizeText(T, size, ratio);
+                }
+
+                // Change unsmashed texts
+                E.package.texts(T) {
+                    ResizeText(T, size, ratio);
+                }
+            }
+        }
+      
+        // Change all manually-added texts
+        B.texts(T) {
+            ResizeText(T, size, ratio);
+        }
+        
+       // ResetVisible(B);
+    }
+    cmd += "GRID LAST;";
+}
+
+void help(void) {
+  dlgDialog("HELP Normalize-Text") {
+    dlgLabel(usage);
+    dlgHBoxLayout {
+      dlgStretch(0);
+      dlgPushButton("+OK") dlgAccept();
+      dlgStretch(0);
+    }
+  };
+}
+
+
+
+void saveParams(){      
+DBbools[0] = units;
+DBbools[1] = 0; //unused
+DBbools[2] = 0; //unused
+
+for (int i = 0; i < 3; i++){
+      if  (DBbools[i]) str_DBbools[i] = '1';
+      else str_DBbools[i] = '0';
+}
+
+output(ULPfilename,"wt"){
+      printf("Bools:%s\n", str_DBbools);
+      printf("ObStr:%f\n", text_size);
+      printf("CmpSt:%f\n", text_thickness);
+      printf("IncMs:%s\n", layerText);
+    }
+}
+
+
+void getParams(){
+int size = filesize(ULPfilename);
+int i = 0;
+string Sarray[];
+if 	(!size){ 
+    	output(ULPfilename,"wt") // check for file existence & create it 
+		printf("000");
+		}
+else{
+	int nStrings = fileread(inString, ULPfilename);
+	nStrings = strsplit(Sarray, inString, '\n');
+
+	text_size = strtod(strsub(Sarray[1], 6, strlen(Sarray[1])));
+	text_thickness = strtod(strsub(Sarray[2], 6, strlen(Sarray[2])));
+	layerText = strsub(Sarray[3], 6, strlen(Sarray[3]));
+
+
+	//Parse out Boolean checkbox info
+	units =             Sarray[0][i++ + 6] - '0'; 
+	DBbools[1] =        Sarray[0][i++ + 6] - '0';  // future use
+	DBbools[2] =        Sarray[0][i++ + 6] - '0';  // future use
+	}
+}
+
+
+/* ------------- MAIN ROUTINE --------------- */
+
+getParams();
+if (board) {
+
+    result = dlgDialog("Normalize layer text sizes") {
+       
+        sprintf(str,"<qt><H3><P>Normalize text sizes %s</P></H3>"+
+                    "<P><B>By Tennessee Carmel-Veilleux, Paul Badger</B></P>"+
+                    "<P>This ULP normalizes all the text on the listed layers to "+
+                    "the specified size and thickness. The ratio is automatically calculated " + 
+                    "from the size and thickness.</P></qt>", VERSION);
+        dlgLabel(str);
+
+        // Options
+        dlgGridLayout {
+         
+        dlgCell(0,0) dlgCheckBox("&Normalize Text", normText); 
+        
+            dlgCell(0,1) dlgGroup("Output units") {
+                dlgRadioButton("m&il",units){text_size = text_size /.0254; text_thickness = text_thickness / .0254; dlgRedisplay(); }
+                dlgRadioButton("&mm",units){text_size = text_size *.0254; text_thickness = text_thickness * .0254; dlgRedisplay(); }
+            }
+           
+                dlgCell(1,0) dlgLabel("Text size:");
+                dlgCell(1,1) dlgRealEdit(text_size,0.5,2000.0);
+
+                dlgCell(2,0) dlgLabel("Text Thickness:");
+                dlgCell(2,1) dlgRealEdit(text_thickness,0.05,500.0);
+                               
+                dlgCell(3,0) dlgLabel("<font size=-1>Layers to Change:<br />sep. by spaces</font>");
+                dlgCell(3,1) dlgStringEdit(layerText);
+                
+                   dlgCell(4,0)  dlgVBoxLayout {
+            
+            dlgLabel("<font size=-1>Layer Reference:<br /> \
+            1   Top<br /> \
+            16   Bottom<br /> \
+            21   tPlace<br /> \
+            22   bPlace<br /> \
+            25   tNames<br /> \
+            26   bNames<br /> \
+            27   tValues<br /> \
+            28   bValues<br /> \
+            29   tStop <br /> \
+            30   bStop <br /> \
+            48   Document<br /> \
+            49   Reference<br /> \
+            121  _tSilk<br /> \
+            122  _bSilk<br /> \
+            </font>"); }
+               
+                
+                   dlgCell(5,0) dlgSpacing(50);
+                dlgCell(5,0)  dlgCheckBox("&Spin All Text", normSpin);
+            
+                dlgCell(6,0) dlgCheckBox("&Fix Handle and Rot.", normHandles); 
+                   
+                dlgCell(7,0) dlgGroup("Handle Ver. Position") {
+                 dlgRadioButton("&Top", foo){ verticalPos=2 ;}
+                dlgRadioButton("&Center", foo){ verticalPos=1 ;}
+                dlgRadioButton("&Bottom", foo){ verticalPos=0 ;}
+                }               
+                dlgCell(7,1)dlgHBoxLayout{dlgGroup("Handle Hor. Position"){
+                dlgRadioButton("&Left", horizontalPos);
+                dlgRadioButton("&Center", horizontalPos);
+                dlgRadioButton("&Rigbt", horizontalPos);
+                  } 
+                 }
+                
+             
+    }
+       
+     
+            
+             // Buttons
+            dlgHBoxLayout {
+            dlgStretch(1);
+            dlgPushButton("Help") help();
+            dlgPushButton("-Cancel") dlgReject();
+            dlgPushButton("+Normalize") dlgAccept();
+            
+        }
+    };
+
+
+    
+    if (!result) exit(0);
+    
+if (result == 1){  // dialog exited with "OK"
+    saveParams();
+    numberOfLayers = strsplit(LayerList, layerText, ' ');   // parse out layer list
+	for (int i; i<numberOfLayers; i++){
+			silk_screen_layers[i] = strtol(LayerList[i]);
+		}
+}
+
+    text_ratio = int(round((text_thickness / text_size) * 100.0)) + 1;
+    if (text_ratio > 31) {
+        text_ratio = 31;
+        dlgMessageBox("!<qt><P><B>Ratio clipped to 31 !</B></P>"+
+                      "<P>Make sure that text thickness is not too large for proper ratio.</P></qt>");
+    }
+
+    if (units == UNIT_MM) {
+        if (text_size > 20.0) {
+            text_size = 20.0;
+            dlgMessageBox("!<qt><P><B>Text size clipped to 20.0mm !</B></P></qt>");
+        }
+    }
+                         
+    ProcessTexts(text_size, text_ratio);
+    
+
+    //  EditBox
+        result = dlgDialog("Edit and execute script") {
+        dlgHBoxLayout {
+            dlgSpacing(500); // Force width of dialog to 500
+        }
+        dlgTextEdit(cmd);
+        dlgHBoxLayout {
+            dlgPushButton("+Execute") dlgAccept();
+            dlgPushButton("-Cancel") dlgReject();
+        }
+    };
+    
+    // Execute script if it was accepted
+    if (!result)
+        exit(0);
+    else
+        exit(cmd);    
+} else {
+    dlgMessageBox(":You must run this ULP in board !");
+    exit(1);
+}

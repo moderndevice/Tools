@@ -49,6 +49,7 @@ MENU 'Grid {\
         AlignD: run tools/AlignD.ulp;|\
         Snap: run tools/Snap.ulp;|\
         NormText: run tools/normalize-text2.0.ulp;|\
+        TextTool: run tools/TextToolv1.0.ulp;|\
         SpinAll: run tools/spin-all.ulp;\
         }'\
      'View {\
