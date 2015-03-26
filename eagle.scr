@@ -8,11 +8,12 @@ SCRIPT MD-Key-assign;
 # Put this in the Scripts folder and rename to eagle.scr
 
 BRD:
-MENU # '[designlink22.png] Search and order : Run designlink-order.ulp -general;'\
+#  MENU '[designlink22.png] Search and order : Run designlink-order.ulp -general;'\
 #      '[pcb-service.png] PCB Service : Run pcb-service.ulp;';
      
 # Menu Add Change Copy Delete Display Grid Group Move Name Quit Rect \
 # Route Script Show Signal Split Text Value Via Window ';' Wire Write Edit;
+
 
 Script tools/MDmenu.scr;
 Script tools/MDdefaultcolors.scr;
@@ -20,9 +21,10 @@ Script tools/MDdefaultcolors.scr;
 #Get rid of the extra internal layers
 # Layer  -3 -4 -5 -6 -7 -8 -9 -10 -11 -12 -13 -14 -15
 
-#Setup Modern Device Defaults 
-Grid mil 5 on;
-Grid alt mil 1;
+#Setup Modern Device Defaults
+Change Dunit mil; 
+Grid mil 25 on;
+Grid alt mil 5;
 
 SET SIZE_MENU 15 20 30 32 35 40 48 52 55 60 65 70 80 90;
 SET WIDTH_MENU 2 4 5 6 8 10 12 16 20 24 30 35 40 50 60 70;
@@ -42,27 +44,29 @@ SET PALETTE WHITE
 
 
 SCH:
-Grid mil 100; Grid alt mil 10;
-Change Width 0.006;
+Change Dunit mil;
+Grid mil 100 on; Grid alt mil 50;
+Change Width 10mil;
 
 LBR:
-Grid mil 5 1; Grid alt mil 1;
+Grid mil 50 on; Grid alt mil 5;
 
 DEV:
-Grid mil 25 1; Grid alt mil 1;
+Grid mil 25 on; Grid alt mil 5;
 
 SYM:
-Grid mil 100 on;
-Grid alt mil 1;
+Change Dunit mil;
+Grid mil 100 on; Grid alt mil 1;
 Change Width 10mil;
 Change Size 60mil;
 
 PAC:
-SET SIZE_MENU 15 20 30 32 35 40 48 52 55 60 65 70 80 90;
+Change Dunit mil;
+Grid mil 25 on; Grid alt mil 5;
+SET SIZE_MENU 15  20  30 32MIL 35MIL 40MIL 48MIL 52MIL 55 60 65 70 80 90;
 SET WIDTH_MENU 2 4 5 6 8 10 12 16 20 24 30 35 40 50 60 70;
 SET ISOLATE_MENU 4 5 6 7 8 9 10 11 12 14 16 18 20 24 30 36;  
 SET DRILL_MENU 6 8 9 10 12 14 20 28 30 32 35 39 60 95 106 120;
-Change ISOLATE 6; #minimum isolation value on flood plane
 Change Size 32; #Font size to start
 Change Font Vector; #Make text on board in vector font
 Change Ratio 15;
