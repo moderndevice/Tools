@@ -30,27 +30,27 @@ MENU 'Grid {\
             None : Display none;|\
             Rats :  rats; |\
             No-Rats : RIPUP @; |\
-            Top : run  tools/toglays.ulp 1 17 18 20 21 23 25 ; Display 20;|\
-            Bottom :run tools/toglays.ulp 16 22 24 26 30 ; Display 20;|\
-            T_Text :run  tools/toglays.ulp 21 25 121;|\
-            B_Text :run  tools/toglays.ulp 22 26 30 122;|\
-            T Origins :run tools/toglays.ulp 23;|\
-            B Origins :run tools/toglays.ulp 24;|\
-            Outline :run tools/toglays.ulp 20;|\
-            Copper T only : run tools/toglays.ulp 1; window;|\
-            Copper B only:  run tools/toglays.ulp 16;|\
-            T Bitmaps :run  tools/toglays.ulp 200 201 202 203 204 205 206 207 208 209 210|\
-            B Bitmaps :run  tools/toglays.ulp 211 212 213 214|\
-            Values :run tools/toglays.ulp 27|\
+            Top : run  $EAGLEDIR/tools/toglays.ulp 1 17 18 20 21 23 25 ; Display 20;|\
+            Bottom :run $EAGLEDIR/tools/toglays.ulp 16 22 24 26 30 ; Display 20;|\
+            T_Text :run  $EAGLEDIR/tools/toglays.ulp 21 25 121;|\
+            B_Text :run  $EAGLEDIR/tools/toglays.ulp 22 26 30 122;|\
+            T Origins :run $EAGLEDIR/tools/toglays.ulp 23;|\
+            B Origins :run $EAGLEDIR/tools/toglays.ulp 24;|\
+            Outline :run $EAGLEDIR/tools/toglays.ulp 20;|\
+            Copper T only : run $EAGLEDIR/tools/toglays.ulp 1; window;|\
+            Copper B only:  run $EAGLEDIR/tools/toglays.ulp 16;|\
+            T Bitmaps :run  $EAGLEDIR/tools/toglays.ulp 200 201 202 203 204 205 206 207 208 209 210|\
+            B Bitmaps :run  $EAGLEDIR/tools/toglays.ulp 211 212 213 214|\
+            Values :run $EAGLEDIR/tools/toglays.ulp 27|\
             TopOnTop : set Option.LayerSequence 1 16 ; window;|\
             BottomOnTop : set Option.LayerSequence 16 1 ; window;\
          }'\
       'ULP{\
-        AlignD: run tools/AlignD.ulp;|\
-        Snap: run tools/Snap.ulp;|\
-        NormText: run tools/normalize-text2.0.ulp;|\
-        TextTool: run tools/TextToolv1.0.ulp;|\
-        SpinAll: run tools/spin-all.ulp;\
+        AlignD: run $EAGLEDIR/tools/AlignD.ulp;|\
+        Snap: run $EAGLEDIR/tools/Snap.ulp;|\
+        NormText: run $EAGLEDIR/tools/normalize-text2.0.ulp;|\
+        TextTool: run $EAGLEDIR/tools/TextToolv1.0.ulp;|\
+        SpinAll: run $EAGLEDIR/tools/spin-all.ulp;\
         }'\
      'View {\
 		Fit : Window Fit; |\
