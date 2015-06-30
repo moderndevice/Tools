@@ -3,7 +3,7 @@
 # This file can be used to configure the editor windows.
 #
 # Uncomment this if you want a set of useful default shortcuts!
-SCRIPT MD-Key-assign;
+
 
 # Put this in the Scripts folder and rename to eagle.scr
 
@@ -14,7 +14,7 @@ BRD:
 # Menu Add Change Copy Delete Display Grid Group Move Name Quit Rect \
 # Route Script Show Signal Split Text Value Via Window ';' Wire Write Edit;
 
-
+SCRIPT MD-Key-assign.scr;
 Script tools/MDmenu.scr;
 Script tools/MDdefaultcolors.scr;
 
@@ -45,7 +45,7 @@ SET PALETTE WHITE
 
 SCH:
 Change Dunit mil;
-Grid mil 100 on; Grid alt mil 50;
+Grid mil 100 off; Grid alt mil 50;
 Change Width 10mil;
 
 LBR:
@@ -56,7 +56,7 @@ Grid mil 25 on; Grid alt mil 5;
 
 SYM:
 Change Dunit mil;
-Grid mil 100 on; Grid alt mil 1;
+Grid mil 100 on; Grid alt mil 5;
 Change Width 10mil;
 Change Size 60mil;
 

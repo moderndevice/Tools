@@ -547,6 +547,9 @@ board(brd)
 	}
     }
 }
-exit("script '" + outputFileName + "'");
+
+exit("script '" + outputFileName + "'; group");
+
+
 
 
