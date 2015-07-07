@@ -41,6 +41,7 @@ int NUM_LAYERS = 8;
 int silk_screen_layers[];
 enum {UNIT_MIL, UNIT_MM};
 int units = UNIT_MIL;
+int normText, spin, handles;
 
 
 /* ------------- UTILITY FUNCTIONS --------------- */
@@ -91,8 +92,38 @@ void ResizeText(UL_TEXT T, real size, int ratio) {
                 break;
         }
         cmd += str;
-    }
+        
+        if (spin){
+        
+        switch (units) {
+            case UNIT_MIL:
+                sprintf(str,"CHANGE SIZE %.3f (%.3f %.3f);\nCHANGE RATIO %d (%.3f %.3f);\n",
+                        size, u2mil(T.x), u2mil(T.y), ratio, u2mil(T.x), u2mil(T.y));
+                        
+                            sprintf(str, "ROTATE SR0 (%.4f %.4f);\n",
+                   u2mil(T.x), u2mil(T.y) );
+                   
+                   
+                        
+                break;
+            case UNIT_MM:
+                sprintf(str,"CHANGE SIZE %.3f (%.3f %.3f);\nCHANGE RATIO %d (%.3f %.3f);\n",
+                        size, u2mm(T.x), u2mm(T.y), ratio, u2mm(T.x), u2mm(T.y));
+                        
+                     sprintf(str, "ROTATE SR180 (%.4f %.4f);\n",
+                   u2mm(T.x), u2mm(T.y) );
+                        
+                break;
+        }
+        
+        cmd += str;
+        }
+    
+        
+     }
+        
 }
+
 
 //
 // Smashes all parts that have an associated package on the board and resize
@@ -230,14 +261,28 @@ if (board) {
             }
             dlgSpacing(1);
             dlgGridLayout {
-                dlgCell(0,0) dlgLabel("Text size:");
-                dlgCell(0,1) dlgRealEdit(text_size,0.5,2000.0);
+            
+               dlgCell(0,0)dlgCheckBox("&Normalize Text Size", normText); 
+            
+             dlgCell(1,0) dlgLabel("Text size:");
+                dlgCell(1,1) dlgRealEdit(text_size,0.5,2000.0);
 
-                dlgCell(1,0) dlgLabel("Text Thickness:");
-                dlgCell(1,1) dlgRealEdit(text_thickness,0.05,500.0);
+                dlgCell(2,0) dlgLabel("Text Thickness:");
+                dlgCell(2,1) dlgRealEdit(text_thickness,0.05,500.0);
                                
-                dlgCell(2,0) dlgLabel("<font size=-1>Layers to Change:<br />sep. by spaces</font>");
-                dlgCell(2,1) dlgStringEdit(layerText);
+                dlgCell(3,0) dlgLabel("<font size=-1>Layers to Change:<br />sep. by spaces</font>");
+                dlgCell(3,1) dlgStringEdit(layerText);
+                
+                dlgCell(4,0) dlgSpacing(7);
+                 dlgCell(5,0)  dlgCheckBox("&Spin All Text", spin);
+                  dlgCell(6,0) dlgCheckBox("&Fix Text Handle", handles); 
+                             
+                int HandlePos = 0;
+                dlgCell(6,1) dlgGroup("Handle Position") {
+                dlgRadioButton("&Bottom Left", HandlePos);
+                dlgRadioButton("&Top Right", HandlePos);
+                } 
+              
             }
         }
 

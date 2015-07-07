@@ -1,4 +1,4 @@
-Bools:001010000100
+Bools:100000000100
 ObStr:
 CmpSt:
 IncMs:0
