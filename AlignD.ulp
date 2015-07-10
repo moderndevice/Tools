@@ -384,7 +384,7 @@ int SortPartList (UL_BOARD brd, int nEls, int DirIsX, int reverse)
 
 
 //		***** The ulp begins here *****
-if ((!board && !library ) && !dlgMessageBox("Can only be used in the board editor.\n")) exit(1);
+if ((!board && !library )&& !dlgMessageBox("Can only be used in the board editor.\n")) exit(1);
 if (EAGLE_VERSION < 6 && !dlgMessageBox("Requires Eagle v5.7 or later.\n")) exit(1);
 
  // parse out dialog box attributes  the logic in the flag list below
@@ -547,9 +547,6 @@ board(brd)
 	}
     }
 }
-
-exit("script '" + outputFileName + "'; group");
-
-
+exit("script '" + outputFileName + "'");
 
 

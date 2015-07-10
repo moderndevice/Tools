@@ -13,26 +13,21 @@ MENU 'Grid {\
              1-.1 : Grid mil 1 1; Grid alt mil .1; |\  
              1-.25 : Grid mil 1 1; Grid alt mil .25; |\           
              5-1 : Grid mil 5 1; Grid alt mil 1; |\
+             10-5 : Grid mil 10 1; Grid alt mil 5; |\
              5m2 1 : Grid mil 5 2; Grid alt mil 1; |\
              5m5-1 :  Grid mil 5 5; Grid alt mil 1; |\
-             10-5 :  Grid mil 10 1; Grid alt mil 5; |\
-             12.5-5 : Grid mil 12.5 1; Grid alt mil 5; |\
              25-1 : Grid mil 25 1; Grid alt mil 1; |\
-             25-5 : Grid mil 25 1; Grid alt mil 5; |\
              25m2-5 : Grid mil 25 2; Grid alt mil 5; |\  
-             25m4-25 : Grid mil 25 4; Grid alt mil 25; |\ 
              50-5 : Grid mil 50 1; Grid alt mil 5; |\ 
-             100-25 : Grid mil 100 1; Grid alt mil 25; |\              
+             100-25 : Grid mil 100 1; Grid alt mil 25; |\                 
              On  : Grid On; |\ 
              Off : Grid Off;\
            }'\
      'Layers {\
             None : Display none;|\
-            Rats :  rats; |\
-            No-Rats RIPUP @: RIPUP @; |\
             Top : run  tools/toglays.ulp 1 17 18 20 21 23 25 ; Display 20;|\
             Bottom :run tools/toglays.ulp 16 22 24 26 30 ; Display 20;|\
-            T_Text :run  tools/toglays.ulp 21 25 121;|\
+            T_Text :run  tools/toglays.ulp 21 25 29 121;|\
             B_Text :run  tools/toglays.ulp 22 26 30 122;|\
             T Origins :run tools/toglays.ulp 23;|\
             B Origins :run tools/toglays.ulp 24;|\
@@ -48,14 +43,12 @@ MENU 'Grid {\
       'ULP{\
         AlignD: run tools/AlignD.ulp;|\
         Snap: run tools/Snap.ulp;|\
-        NormText: run tools/normalize-text2.0.ulp;|\
-        TextTool: run tools/TextToolv1.0.ulp;|\
-        SpinAll: run tools/spin-all.ulp;\
+        NormText: run tools/normalize-text2.0.ulp;\
         }'\
      'View {\
 		Fit : Window Fit; |\
 		Rats :  rats; |\
-		No-Rats : RIPUP @; |\
+		NoFill : RIPUP @; |\
         Pad Names : SET PAD_NAMES ON; |\
         No Pad Nm : SET PAD_NAMES OFF; \
      }';
