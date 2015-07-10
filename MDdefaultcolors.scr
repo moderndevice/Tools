@@ -5,13 +5,12 @@
 
 set palette white;
 # you can't change index 0 in the white palette;
-set palette 0 0xFFFFFFFF;
-set palette 1 0xB41CC2FE;
-set palette 2 0xB4002400;
-set palette 3 0xB4008080;
-set palette 4 0x96CE0029;
+set palette 1 0x961CC2FE;
+set palette 2 0xDC00A300;
+set palette 3 0xB400EE6B;
+set palette 4 0x82CE0003;
 set palette 5 0xB4800080;
-set palette 6 0xB4A9D800;
+set palette 6 0xC8EEEE00;
 set palette 7 0xB43F8371;
 set palette 8 0xB4C0B700;
 set palette 9 0xE10138DC;
