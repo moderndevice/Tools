@@ -79,7 +79,7 @@
 enum {false, true};
 enum {ALIGN_ALONG_YAXIS, ALIGN_ALONG_XAXIS};
 enum {GROUP, LIST};
-string outputFileName = "aligntempfile.scr";
+string outputFileName = "alignDtempfile.scr";
 string partlist[];
 int alignment, xRefObject = INT_MAX, yRefObject = INT_MAX, xAligned = INT_MAX, yAligned = INT_MAX, xMin = INT_MAX, xMax = INT_MIN, yMax = INT_MIN, yMin = INT_MAX, noElements = 0, mode = GROUP, firstInList = 1,
 	alignToComponentFlag = false, keepFlag=false, alignToGridFlag = false, alignToObjectFlag = false, alignOnVerticalLine = false, alignOnHorizontalLine = false, regexFlag = false, snapFlag = false, distributeFlag = false, incrementFlag = false;
