@@ -79,7 +79,7 @@
 enum {false, true};
 enum {ALIGN_ALONG_YAXIS, ALIGN_ALONG_XAXIS};
 enum {GROUP, LIST};
-string outputFileName = "alignDtempfile.scr";
+string outputFileName = "aligntempfile.scr";
 string partlist[];
 int alignment, xRefObject = INT_MAX, yRefObject = INT_MAX, xAligned = INT_MAX, yAligned = INT_MAX, xMin = INT_MAX, xMax = INT_MIN, yMax = INT_MIN, yMin = INT_MAX, noElements = 0, mode = GROUP, firstInList = 1,
 	alignToComponentFlag = false, keepFlag=false, alignToGridFlag = false, alignToObjectFlag = false, alignOnVerticalLine = false, alignOnHorizontalLine = false, regexFlag = false, snapFlag = false, distributeFlag = false, incrementFlag = false;
@@ -384,7 +384,7 @@ int SortPartList (UL_BOARD brd, int nEls, int DirIsX, int reverse)
 
 
 //		***** The ulp begins here *****
-if ((!board && !library )&& !dlgMessageBox("Can only be used in the board editor.\n")) exit(1);
+if ((!board && !library ) && !dlgMessageBox("Can only be used in the board editor.\n")) exit(1);
 if (EAGLE_VERSION < 6 && !dlgMessageBox("Requires Eagle v5.7 or later.\n")) exit(1);
 
  // parse out dialog box attributes  the logic in the flag list below
@@ -547,6 +547,9 @@ board(brd)
 	}
     }
 }
-exit("script '" + outputFileName + "'");
+
+exit("script '" + outputFileName + "'; group");
+
+
 
 
