@@ -1,0 +1,15 @@
+int fillings;
+if(!board){ dlgMessageBox("Start this ULP in a Board"); exit(0);}
+else {     
+     board(B){
+          B.signals(S){
+               S.polygons(P){
+                    P.fillings(F){
+                         fillings++;
+                    }
+               }
+          }
+     }
+if(fillings>0)exit("RIPUP @;\n");    //"Fillings exist"
+else exit("RATSNEST;\n");
+}
