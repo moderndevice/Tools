@@ -3,7 +3,7 @@
 # This file can be used to configure the editor windows.
 	
 # GENERAL:
-ASSIGN C+M MOVE;
+ASSIGN F1 MOVE;
 ASSIGN C+Z UNDO;
 ASSIGN C+G  GROUP;
 ASSIGN CS+A ADD;
@@ -20,13 +20,13 @@ ASSIGN C+F 'RUN find.ulp';
 BRD:
 ASSIGN F1 MOVE;
 ASSIGN F2 ROUTE;
+ASSIGN F3 MITER;
 ASSIGN C+E ERRORS;
-ASSIGN CS+D 'DRC;';  # Executes DRC without opening DRC dialog. For dialog sk
-#ASSIGN CS+D DRC;    # Opens DRC dialog.
+ASSIGN CMD+D Deleter;
+ASSIGN C+D 'DRC;';  # Executes DRC without opening DRC dialog. For dialog sk
+#ASSIGN C+D DRC;    # Opens DRC dialog.
 ASSIGN CS+V VALUE;
-ASSIGN C+R ROUTE;
-ASSIGN CS+R RIPUP;
-#ASSIGN A+R RATSNEST;
+ASSIGN CMD+R run toggleRats.ulp;
 ASSIGN C+H HOLE;
 ASSIGN CS+S SMASH;
 ASSIGN C+S SIGNAL;
