@@ -50,8 +50,9 @@ MENU 'Grid {\
       'ULP{\
         AlignD: run tools/AlignD.ulp;|\
         Snap: run tools/Snap.ulp;|\
-        TextTool: run tools/TextToolv1.0.ulp;\
-        }'\
+        TextTool: run tools/TextToolv1.0.ulp;|\
+        Smash All: group all; smash (C>0 0);\      
+          }'\
      'View {\
 		Fit : Window Fit; |\
 		Rats :  rats; |\
