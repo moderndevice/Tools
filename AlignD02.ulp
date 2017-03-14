@@ -216,6 +216,7 @@ getParams();
 Result = dlgDialog("AlignD ULP") {
   dlgVBoxLayout {
      dlgStretch(0);
+     dlgLabel("<font size=-1>Aligns elements to the leftmost<br />and bottommost elements.<br /></font>");
      dlgGroup("AlignD ULP by Paul Badger v0.2") {
         dlgStretch(1);
         dlgGridLayout {

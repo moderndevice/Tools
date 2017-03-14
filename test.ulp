@@ -1,0 +1,8 @@
+if (board)
+output("PaulFile.txt", "wt") {
+printf("Directly printed\n");
+board(B) {
+B.elements(E)
+printf("%s,%d,%d\n", E.name, E.x, E.y);
+}
+}
