@@ -45,7 +45,7 @@ SET PALETTE WHITE
 
 SCH:
 Change Dunit mil;
-Grid mil 100 off; Grid alt mil 50;
+Grid mil 50 off; Grid alt mil 25;
 Change Width 10mil;
 
 LBR:
