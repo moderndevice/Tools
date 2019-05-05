@@ -1,0 +1,1008 @@
+#require 6.0200
+
+#include "pcbomdefaults.h"
+
+// THIS PROGRAM IS PROVIDED AS IS AND WITHOUT WARRANTY OF ANY KIND, EXPRESSED OR IMPLIED
+
+string Version = "2.00";
+
+/*
+ Revision: 2.00
+
+ Revision history:
+
+ Based on V1.09 version of BOM in V6.40 but major parts re-written
+
+ Apologies for any German being wrong used Google translate mainly and past translations
+ please advise any corrections for German or any other languages with a complete set, for all strings.
+
+ 2.0 28/8/15 PC Remove unused variables PartDescription, make NumLines global and use in list processing
+                Improve functions like StripWhiteSpaces
+                Always collect all data then sort what to display or save
+                Remove extra blanks and separators on end of lines CSV ';"";' HTML empty '<td></td>' Text extra spaces
+                 (mainly by changing '\t' separators added before next column heading or data)
+                Reformat header with newlines for easier TEXT printing (add newline to <BR> in HTML version)
+                In text output remove white space from end of line.
+                Try to make consistent code style was haphazard before
+                previous V1.03 mod added description in code but NOT same string in translation array so
+                would not translate the header row.
+                Add extra Dialog controls for CSV separator, Text mode wrap column, columns to list or not
+                Dialog Defaults now in pcbomdefaults.h for easier user setup allows setting of -
+                  file modifier and extension defaults ege name-BOM.csv
+                  columns to list including attributes
+                  List type Parts/Values
+                  file format Text/CSV/Html
+                  CSV separator character  currently "," or ";" or "\t" (Tab)
+                  Columns to list or not
+                  Text mode column to wrap it and work out alignment
+                    If last column is wrapped then that column is wrapped and next line padded to align 
+                           (min 6 characters space)
+                    Else whole line wrapped recursively till whole line printed and wrapped
+                In Values mode do additional sort by Part to get caps together etc
+*/
+
+#usage "en: <h3><b>Export a Bill Of Material</b></h3>\n"
+           "<p>Generates a project's <i>Bill Of Material</i> &nbsp; including the attributes introduced in version 5.0.0.</p>"
+           "<p>Other Features - </p>"
+           "<ul>"
+           "  <li>HTML more correctly formatted</li>"
+           "  <li>Selectable CSV Separator character</li>"
+           "  <li>Text mode with selectable line wrap column, and <b>no<b> spaces on end of line</li>"
+           "  <li>All output modes no extra empty columns on end of each line</li>"
+           "  <li>Select columns to <b>NOT</b> display/export</li>"
+           "  <li>Value Order secondary sort by Parts to group <b>C1, C2...Cxx then D1, D2....</b></li>"
+           "  <li>More efficient coding and consistent code style</li>"
+           "  <li>Gather all data <b>ONCE</b> at start or change in variant, use that to format outputs as required</li>"
+           "  <li>pcbomdefaults.h lets user define their normal use method (see comments in file).</li>"
+           "</ul>"
+           "<p>This version much adapted from the original (V1.09 bom.ulp) supplied as of V6.40</p>"
+           "<p>ULP by <author>Paul Carpenter, <a href=\"http://www.pcserviceselectronics.co.uk\">PC Services, UK</a></author></p>"
+       ,
+       "de: <h3><b>Stückliste exportieren</b></h3>\n"
+           "<p>Erzeugt die <i>Stückliste</i> (Bill Of Material)  &nbsp; eines Projekts, einschließlich der"
+           " mit Version 5.0.0 neu eingeführten Attribute."
+           "<p>Andere Eigenschaften  - </p>"
+           "<ul>"
+           "  <li>HTML mehr korrekt formatiert</li>"
+           "  <li>Wählbare CSV Trennzeiche</li>"
+           "  <li>Text-Modus mit wählbarem Zeilenumbruch Spalte und <b>keine</b> Leerzeichen am Zeilenende</li>"
+           "  <li>Alle Ausgabe-Modi keine zusätzlichen leeren Spalten am Ende jeder Zeile</li>"
+           "  <li>Wählen Sie Spalten <b>nicht</b> anzeigen / exportieren</li>"
+           "  <li>Wert Sortieren Sekundär sortieren nach Teile zur Gruppe <b>C1, C2 ... Cxx dann D1, D2 ....</b></li>"
+           "  <li>Weitere effiziente Codierung und einheitliche Code-Stil</li>"
+           "  <li>Sammeln Sie alle Daten einmal beim Start oder ändern Sie in der Variante, verwenden, um Format Ausgänge je nach Bedarf</li>"
+           "  <li>pcbomdefaults.h können Nutzer ihrer üblichen Verwendungsmethode (siehe Kommentare in der Datei) definieren</li>"
+           "</ul>"
+           "<p>Diese Version viel von der ursprünglichen (V1.09 bom.ulp) angepasst wie der V6.40 geliefert</p>"
+           "<p>ULP von <author>Paul Carpenter, <a href=\"http://www.pcserviceselectronics.co.uk\">PC Services, UK</a></author></p>"
+
+string HelpTextEN =
+  "<h2><b>How to generate the Bill Of Material</b></h2>\n"
+  "<p>Version V2.00</p>"
+  "<h3><b>List type</b></h3>\n"
+  "<p>The <i>Bill Of Material</i> can be generated either as a list by -</p>\n"
+  "<ul>\n"
+  "  <li>Parts - every part is listed on a line of its own</li>\n"
+  "  <li>Values - all parts with the same value are grouped together in one line and then grouped in Parts order</li>\n"
+  "</ul>\n"
+  "<p>Use the <b><u>P</u>arts</b> and <b><u>V</u>alues</b> radio buttons to select the list type.</p>\n"
+  "<h3><b>Output format</b></h3>\n"
+  "<p>Choose between formats -</p>\n"
+  "<ul>\n"
+  "  <li>pure ASCII <b><u>T</u>ext</b> with selectable wrap width</li>\n"
+  "  <li><b><u>C</u>SV</b> with selectable Separator character</li>\n"
+  "  <li><b><u>H</u>TML</b>.</li>\n"
+  "</ul>\n"
+  "<h3><b>Columns</b></h3>\n"
+  "<p>Some columns can be removed from the list and saved file for easier printing and export,"
+  " these columns can be not listed by unticking the checkbox and are -</p>\n"
+  "<ul>\n"
+  "  <li>Device</li>\n"
+  "  <li>Package</li>\n"
+  "  <li>Description</li>\n"
+  "  <li>Attributes (All or none)</li>\n"
+  "</ul>\n"
+  "<h3><b>Default modes</b></h3>\n"
+  "<p>The startup default settings of this script can be changed by editing 'bomdefaults.h' in the"
+  " same directory as this ULP, read the comments in that file for what values to use.</p>\n"
+  "<p>ULP by <author>Paul Carpenter, <a href=\"http://www.pcserviceselectronics.co.uk\">PC Services, UK</a></author></p>\n"
+  ;
+
+string HelpTextDE =
+  "<h2><b>Erzeugen der Stückliste</b></h2>\n"
+  "<p>Version V2.00</p>"
+  "<h3><b>Listen-Typ</b><h3>\n"
+  "<p>Die <i>Stückliste</i> kann entweder als Liste erzeugt werden -</p>\n"
+  "<ul>\n"
+  "  <li>Bauteil - jedes Teil ist auf einer eigenen Zeile aufgeführt</li>\n"
+  "  <li>Werte - alle Teile mit dem gleichen Wert in einer Zeile zusammengefasst und dann "
+  "in Teile, um gruppierte</li>\n"
+  "</ul>\n"
+  "<p>Verwenden Sie die Ersatzteile und Werte Optionsfelder, um die Liste Typ aus.</p>\n"
+  "<h3><b>Ausgabeformat</b></h3>\n"
+  "<p>Wählen Sie zwischen verschiedenen Formaten -</p>\n"
+  "<ul>\n"
+  "  <li>reinem ASCII-<b><u>T</u>ext</b> mit wählbarem Wrap Spalte</li>\n"
+  "  <li><b><u>C</u>SV</b> mit wählbaren Trennzeichen</li>\n"
+  "  <li><b><u>H</u>TML</b>.</li>\n"
+  "</ul>\n"
+  "<h3><b>Columns</b></h3>\n"
+  "<p>Einige Spalten können aus der Liste entfernt und gespeicherte Datei zur leichteren Druck "
+  "und Export werden kann, können diese Säulen nicht durch Haken bei der Checkbox aufgeführt werden und sind -</p>\n"
+  "<ul>\n"
+  "  <li>Device</li>\n"
+  "  <li>Gehäuse</li>\n"
+  "  <li>Beschreibung</li>\n"
+  "  <li>Attributes (alle oder keine)</li>\n"
+  "</ul>\n"
+  "<h3><b>Standard-Modi</b></h3>\n"
+  "<p>Die Startup-Standardeinstellungen dieses Skripts kann durch Bearbeiten 'bomdefaults.h' in das "
+  "gleiche Verzeichnis wie dieses ULP geändert werden, lesen Sie die Kommentare in dieser Datei für "
+  "welche Werte zu verwenden.</p>\n"
+  "<p>ULP von <author>Paul Carpenter, <a href=\"http://www.pcserviceselectronics.co.uk\">PC Services, UK</a></author></p>\n"
+  ;
+
+  string I18N[ ] = {
+  "en\v"
+  "de\v"
+  ,
+  "<hr><b>ERROR: No schematic!</b><p>\nThis program can only work in the schematic editor.\v"
+  "<hr><b>FEHLER: Kein Schaltplan!</b><p>\nDieses Programm kann nur in einem Schaltplan verwendet werden.\v"
+  ,
+  "Part\tValue\v"
+  "Bauteil\tWert\v"
+  ,
+  "\tDevice\v"
+  "\tDevice\v"
+  ,
+  "\tPackage\v"
+  "\tGehäuse\v"
+  ,
+  "Qty\tValue\v"
+  "Menge\tWert\v"
+  ,
+  "Parts\v"
+  "Bauteile\v"
+  ,
+  "\tDescription\v"
+  "\tBeschreibung\v"
+  ,
+  "Partlist exported at %s from\n  %s\v"
+  "Stückliste exportiert am %s aus\n  %s\v"
+  ,
+  "Bill Of Material - Preview\v"
+  "Stückliste - Vorschau\v"
+  ,
+  "-Close\v"
+  "-Schließen\v"
+  ,
+  "Save Bill Of Material\v"
+  "Stückliste speichern\v"
+  ,
+  "File '\v"
+  "Datei '\v"
+  ,
+  "' exists\n\nOverwrite?\v"
+  "' existiert\n\nÜberschreiben?\v"
+  ,
+  "+&Yes\v"
+  "+&Ja\v"
+  ,
+  "-&No\v"
+  "-&Nein\v"
+  ,
+  "&No\v"
+  "&Nein\v"
+  ,
+  "Name already defined!\v"
+  "Name ist bereits definiert!\v"
+  ,
+  " Header\v"
+  " Spaltenüberschrift\v"
+  ,
+  "&Name:\v"
+  "&Name:\v"
+  ,
+  "+OK\v"
+  "+OK\v"
+  ,
+  "Name can't be empty!\v"
+  "Name kann nicht leer sein!\v"
+  ,
+  "-Cancel\v"
+  "-Abbrechen\v"
+  ,
+  "&Headers\v"
+  "&Spaltenüberschriften\v"
+  ,
+  "Bill Of Material - Help\v"
+  "Stückliste - Hilfe\v"
+  ,
+  "Bill Of Material\v"
+  "Stückliste\v"
+  ,
+  "List type\v"
+  "Listen-Typ\v"
+  ,
+  "&Parts\v"
+  "&Bauteile\v"
+  ,
+  "&Values\v"
+  "&Werte\v"
+  ,
+  "Output format\v"
+  "Ausgabeformat\v"
+  ,
+  "&Text\v"
+  "&Text\v"
+  ,
+  "&CSV\v"
+  "&CSV\v"
+  ,
+  "&HTML\v"
+  "&HTML\v"
+  ,
+  "+Vie&w\v"
+  "+&Vorschau\v"
+  ,
+  "&Save...\v"
+  "&Speichern...\v"
+  ,
+  "H&elp\v"
+  "H&ilfe\v"
+  ,
+  "Current &variant \v"
+  "Aktuelle &Variante \v"
+  ,
+  "&Attributes\v"
+  "&Attribute auflisten\v"
+  ,
+  "Device\v"
+  "Device\v"
+  ,
+  "Package\v"
+  "Gehäuse\v"
+  ,
+  "Description\v"
+  "Beschreibung\v"
+  };
+
+int Language = strstr( I18N[ 0 ], language( ) ) / 3;
+
+// Separator for data processing
+char   Separator = ';';
+
+// Separator characters for CSV export
+char   SepChars[] = { ',', ';', '\t' };
+string SepLabels[] = { ",", ";", "Tab" };
+string SeparatorString;
+
+// Parts Order and general parts list to list box variables
+int     NumParts;
+int     NumLines;
+numeric string Lines[ ];
+numeric string PartName[ ];
+string  PartValue[ ], PartDevice[ ], PartPackage[ ], PartHeadline[ ];
+int     PartValueOn[ ];
+// Value order Variables
+int     NumVal;                  // Number of Value entries
+int     ValQty[ ];               // Qty for each item
+int     ValIndex[ ];             // Index into Part Number array for this part
+numeric string ValParts[ ];      // PartNames concatanated C1, C2, C3... etc
+
+int     Selected = -1;           // List box view default selection (none)
+int     ListSort = 1;            // List box view default Sort Column
+
+// Variant sorting variables
+string  CurrentVariant = "";
+string  Variants[ ] = { "" };
+int     cntVD = 0;
+int     VDsel = 0;
+
+// Attributes variables
+int FoundAttributes = 0;             // # of different attribute names found in schematic.
+numeric string AttributesList[ ];    // Sorted list of all attributes found in the schematic.
+numeric string PartAttributes[ ];    // Adjusted list of attributes per part.
+
+// Enumerators for radio buttons and combo lists
+enum { ltParts, ltValues };          // List Types
+enum { ofText, ofCSV, ofHTML };      // Output Formats
+enum { Comma, Semi, TAB };           // CSV Separator character
+
+/// --------- Functions
+
+// Translate a given string defined in code to match array above and give
+// local version (bad method but standard Eagle method)
+string tr( string s )
+{
+string t = lookup(I18N, s, Language, '\v');
+return t ? t : s;
+}
+
+
+/************** Collect data routines and sort *********************
+/* Collect list of Attributes Names in file and sort
+    Fills
+       AttributeList{ ]
+       FoundAttributes  - count created
+*/
+void CollectAttributes( void )
+{
+int Found = 0, i;
+
+schematic( SCH )
+  {
+  SCH.parts( P )
+    {
+    if( P.device.package )
+      {
+      if( P.populate )
+        {
+        P.attributes( A )
+          {
+          if( 0 == FoundAttributes )
+            {
+            // First one
+            AttributesList[ 0 ] = A.name;
+            FoundAttributes = 1;
+            }
+          else
+            {
+            Found = 0;
+            for( i = 0; i < FoundAttributes; i++ )
+               {
+               if( A.name == AttributesList[ i ] )
+                 {
+                 // Found an already listed atrribute
+                 Found = 1;
+                 break;
+                 }
+               }
+            if( 0 == Found )
+              {
+              // Attribute not listed, add at the end.
+              AttributesList[ FoundAttributes ] = A.name;
+              FoundAttributes++;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+sort( FoundAttributes, AttributesList );
+}
+
+
+/* Collect part data and attributes from the schematic.
+ and attributes and sort in Part reference order
+
+ Arguments: -   Assembly Variant to use
+
+ Returns:   NOTHING
+
+ Globals affected:  The following are populated
+            NumParts            - # of found parts
+            PartName[ ]
+            PartValue[ ]
+            PartDevice[ ]
+            PartPackage[ ]
+            PartHeadline[ ]
+            PartValueOn[ ]      - 0 = part value off,
+                                  1 = part value on,
+                                  2 = override with attr. VAL
+            FoundAttributes     - # of different attribute names found in schematic.
+            AttributesList[ ]   - Sorted list of all attributes found in the schematic.
+            PartAttributes[ ]   - Adjusted list of attributes per part.
+            ValIndex[ ]         - Sorted list of index into Partxxxxx[ ] arrays for other info
+            ValQty[ ]           - Qty for that item
+            ValParts[ ]         - List of PartName[ ] names
+*/
+void CollectPartData( string var )
+{
+int i, Index[ ], VIndex[ ], Qty[ ];
+string attr[ ];
+numeric string Parts[ ]; 
+
+NumParts = 0;     // Number of Parts found
+NumVal = 0;       // number of values found
+// First, collect the names of all available attributes.
+FoundAttributes = 0;
+CollectAttributes( );
+
+// Second, collect all normal part data and attributes for each part
+schematic( SCH )
+  {
+  SCH.parts(P)
+    {
+    if(P.device.package)
+      {
+      if(P.populate)
+        {
+        PartName[ NumParts ] = P.name;
+        PartValue[ NumParts ] = P.value;
+        PartDevice[ NumParts ] = P.device.name;
+        PartPackage[ NumParts ] = P.device.package.name;
+        PartHeadline[ NumParts ] = P.device.headline;
+        PartValueOn[ NumParts ] = P.device.value == "On";
+        // Zero all strings
+        for( i = 0; i < FoundAttributes; i++ )
+            attr[ i ] = "";
+        P.attributes( A )
+          {
+          for( i = 0; i < FoundAttributes; i++ )
+             if( A.name == AttributesList[ i ] )
+               {
+               attr[ i ] = A.value;
+               break;
+               }
+            if( "VALUE" == A.name && 0 < strlen( A.value ) )
+              // Override old fashioned value information!
+              PartValueOn[ NumParts ] = 2;
+          }
+        PartAttributes[ NumParts ] = strjoin( attr, Separator );
+        NumParts++;
+        }
+      }
+    }
+  }
+
+// Collate Value data as index into Parts array and minimal data
+sort( NumParts, Index, PartValue, PartDevice, PartPackage, PartAttributes, PartName, PartHeadline );
+// Loop through Partxxx arrays for exact same values using Index array using
+// vidx_s = start value index of current matching value
+// vidx_e = current/last  value index (difference = qty found)
+// part_s = start Partxxx index
+// part_e = current/end Partxxx index
+for( int vidx_s = 0, vidx_e = 0;  vidx_e < NumParts; )
+   {
+   int part_s = Index[ vidx_s ];
+   int part_e = Index[ vidx_e ];
+   if( PartValue[ part_s ] == PartValue[ part_e ]
+        && PartDevice[ part_s ] == PartDevice[ part_e ]
+        && PartAttributes[ part_s ] == PartAttributes[ part_e ] )
+     {
+     // Not First value so needs separator
+     if( part_s != part_e )
+       Parts[ NumVal ] += ", ";
+     // Always add PartName
+     Parts[ NumVal ] += PartName[ part_e ];
+     // Search for next if not end
+     if( ++vidx_e < NumParts )
+       continue;
+     }
+   // Found all the same part so now save count and PartNumb index for that value
+   Qty[ NumVal ] = vidx_e - vidx_s;
+   VIndex[ NumVal ] = part_s;
+   vidx_s = vidx_e;                       // Resume at next value as start of match process
+   NumVal++;                              // This value complete
+   }
+sort( NumVal, Index, Parts, VIndex, Qty ); // Sort by PartNames (C1, C2....)
+
+for( i = 0;  i < NumVal; i++ )            // Copy complete sort order to final arrays
+   {
+   ValQty[ i ] = Qty[ Index[ i ] ];
+   ValParts[ i ] = Parts[ Index[ i ] ];
+   ValIndex[ i ] = VIndex[ Index[ i ] ];
+   }
+}
+
+
+/*********** Generate List box output functions *******************/
+// Create Heading for Attributes columns IF listing and they exist
+string AttrHeader( void )
+{
+string s;
+if( UseAttributes && FoundAttributes )
+  s = "\t" + strjoin( AttributesList, '\t' );
+return s;
+}
+// Create Description Column Heading IF listing
+string DescHeader( void )
+{
+string d;
+if( UseDescription )
+  d = tr( "\tDescription" );
+return d;
+}
+// Create Device Column Heading IF listing
+string DevHeader( void )
+{
+string d;
+if( UseDevice )
+  {
+  d = tr( "\tDevice" );
+  ListSort++;
+  }
+return d;
+}
+// Create Device Column Heading IF listing
+string PackHeader( void )
+{
+string d;
+if( UsePackage )
+  {
+  d = tr( "\tPackage" );
+  ListSort++;
+  }
+return d;
+}
+
+
+// Part Order generate array of tab delimited strings for List in List box
+void GeneratePartList( void )
+{
+string attr[ ];
+
+NumLines = 0;
+Lines[ NumLines++ ] = tr( "Part\tValue" ) + DevHeader( ) + PackHeader( ) + DescHeader( ) + AttrHeader( );
+for(int i = 0; i < NumParts; i++ )
+   {
+   strsplit( attr, PartAttributes[ i ], Separator );
+   Lines[ NumLines ] = PartName[ i ] + "\t" + PartValue[ i ];
+   if( UseDevice )
+     Lines[ NumLines ] += "\t" + PartDevice[ i ];
+   if( UsePackage )
+     Lines[ NumLines ] += "\t" + PartPackage[ i ];
+   if( UseDescription )
+     Lines[ NumLines ] += "\t" + PartHeadline[ i ];
+   if( UseAttributes && FoundAttributes )
+     Lines[ NumLines ] += "\t" + strjoin( attr, '\t' );
+   NumLines++;
+   }
+ListSort = 1;
+}
+
+
+// Value Order Generate list with one entry per value. To populate list for List box
+// 'VALUE' is replaced by the value of attribute 'VAL', if existing.
+void GenerateValueList( void )
+{
+int Index;
+string attr[ ], s_val;
+
+NumLines = 0;
+ListSort = 3;  // Min value
+Lines[ NumLines ] = tr( "Qty\tValue" );
+Lines[ NumLines++ ] += DevHeader( ) + PackHeader( ) + tr( "\tParts" ) + DescHeader( ) + AttrHeader( );
+// loop through Valxxxx arrays, using ValIndex to create Index into Part arrays
+// to get Value, Device, Package, Description, Attribute Values for Part
+// i = index into Valxx arrays
+// Index = index into Partxxxx arrays
+for( int i = 0; i < NumVal; i++ )
+   {
+   Index = ValIndex[ i ];
+   sprintf( s_val, "%d\t", ValQty[ i ] );
+   Lines[ NumLines ] = s_val + PartValue[ Index ];
+   if( UseDevice )
+     Lines[ NumLines ] += "\t" + PartDevice[ Index ];
+   if( UsePackage )
+     Lines[ NumLines ] += "\t" + PartPackage[ Index ];
+   Lines[ NumLines ] += "\t" + ValParts[ i ];
+   if( UseDescription )
+     Lines[ NumLines ] += "\t" + PartHeadline[ Index ];
+   if( UseAttributes && FoundAttributes )
+     {
+     strsplit( attr, PartAttributes[ Index ], Separator );
+     Lines[ NumLines ] += "\t" + strjoin( attr, '\t' );
+     }
+   NumLines++;
+   }
+Lines[ NumLines ] = "";     // Ensure Lines array finishes now and old contents (part order) not read
+}
+
+
+// General call to generate list box string that then calls appropriate Part or Value order
+void GenerateList( void )
+{
+switch( ListType )
+  {
+  case ltParts:
+          GeneratePartList( );
+          break;
+  case ltValues:
+         GenerateValueList( );
+         break;
+  }
+}
+
+
+/*********** View/Save output functions *************/
+// PC 28/8/15 Simpler and faster executing version calls strsub and strlen ONCE
+//            compared to previous recursive loops
+// strips leading and trailing white spaces from a string
+string StripWhiteSpace( string s )
+{
+if( s )
+  {
+  int start, end;
+
+  start = 0;
+  end = 0;
+  while( isspace( s[ start ] ) )
+       start++;
+  end = strlen( s ) - 1;    // get last index
+  while( isspace( s[ end ] ) )
+    end--;
+  s = strsub( s, start, end - start + 1 );
+  }
+return s;
+}
+
+
+// Create Header (title) for Text and HTML outputs
+// Convert '\n' to '<BR>\n' for HTML
+string MakeListHeader( void )
+{
+string s, tmp;
+int start, idx;
+
+schematic( SCH )
+sprintf( s, tr( "Partlist exported at %s from\n  %s" ), t2string( time( ) ), SCH.name );
+// for HTML replace any number of newline with <BR> in headers
+if( OutputFormat == ofHTML )
+  {
+  tmp = "";
+  start = 0;
+  idx = strchr( s, '\n' );
+  if( start >= 0 )
+    {
+    do
+      {
+      tmp += strsub( s, start, idx - start );
+      tmp += "<br>\n";
+      start = idx + 1;
+      }
+    while( ( idx = strchr( s, '\n', start ) ) >= 0 );
+    tmp += strsub( s, start );
+    s = tmp;
+    }
+  }
+return s;
+}
+
+
+// Get number current column headings from lines used in main listbox dialog
+int GetNumColumns( void )
+{
+string a[ ];
+return strsplit( a, Lines[ 0 ], '\t' );
+}
+
+
+// Create text Output for view/save
+// 28/8/15 PC Simplify and remove extra spaces from lines
+//     Add column wrap for easier printing mainly for Part names in Value mode
+//     Wrapping modes
+//           0 = no wrap
+//           1 = wrap last column
+//           2 = wrap remainder of line more than one heading column
+string MakeListText( void )
+{
+int idx, length;
+int Width[ ], numHeaders, TotWidth;
+int colmode;
+int colpad;                   // amount to pad/indent wrapped lines
+int colavail;                 // amount of final column in first line
+string List, a[ ], s, tmp;
+
+numHeaders = GetNumColumns( );
+
+// get maximum column width for each column
+for( idx = 0; idx < NumLines; idx++ )
+   {
+   strsplit( a, Lines[ idx ], '\t' );
+   for( int n = 0; n < numHeaders; n++ )
+      Width[ n ] = max( Width[ n ], strlen( a[ n ] ) );
+   }
+// Find where wrap point is in terms of headings and characters left   
+for( idx = 0; idx < numHeaders; idx++ )
+   {
+   TotWidth += Width[ idx ] + 1;
+   if( !colmode )
+     if( TotWidth > WrapText )
+       {
+       colpad = TotWidth - Width[ idx ] - 1;
+       colavail = WrapText - colpad;
+       if( idx == numHeaders - 1 && colavail >= COLMIN )
+         colmode = 1;     // enough space to wrap last column use column mode
+       else
+         {
+         colmode = 2;     // not enough space for remain columns so whole line
+         colpad = Width[ 0 ] + 1;  // line mode different padding on next line
+         colavail = WrapText - colpad;
+         }
+       }
+   }
+TotWidth--;
+// Start output now   
+List = MakeListHeader( ) + "\n";
+List += "PCBOM Version: " + Version + "\n";
+if( colmode )
+  List += "In "+ ( ( colmode - 1 ) ? "line" : "column" ) + " wrap mode\n";
+List += "\n";
+for( idx = 0; idx < NumLines; idx++ )
+   {
+   tmp = "";
+   strsplit( a, Lines[ idx ], '\t' );
+   for( int i = 0; i < numHeaders; i++ )
+      {
+      sprintf( s, " %-*s", Width[ i ], a[ i ] );
+      tmp += s;
+      }
+   // remove leading and trailing space and terminate
+   s = StripWhiteSpace( tmp );
+   // Now sort out line wrapping if this line longer than wrap point
+   if( !colmode || ( length = strlen( s ) ) < WrapText )
+     List += s + "\n";
+   else  
+     {
+     int start, end, x;
+
+     start = 0;
+     end = WrapText;
+     do
+       {
+       if( end >= length )                // last segment no more wrap just print
+         List += strsub( s, start );
+       else
+         {
+         x = strrchr( s, ' ', end );      // wrap at space on or before wrap point
+         if( x > 0 )
+           end = x;
+         List += strsub( s, start, end - start );
+         }
+       start = end + 1;                   // skip space on wrap
+       if( start <= length )              // More to do prepare wrapped line
+         {
+         end += colavail;
+         sprintf( tmp, "\n%-*s", colpad, "" );
+         List += tmp;
+         }
+       }
+     while( start <= length );
+     List += "\n";
+     }
+   }
+return List;
+}
+
+
+// Make comma-separated list (CSV), with all values double-quoted.
+// Correct to remove trailing separator uses selectable separator
+string MakeListCSV( void )
+{
+string List, a[ ], tmp;
+int numHeaders;
+
+numHeaders = GetNumColumns( );
+for( int idx = 0; idx < NumLines; idx++ )
+  {
+  tmp = "";
+  strsplit( a, Lines[ idx ], '\t' );
+  for( int i = 0; i < numHeaders; i++ )
+     tmp +=  "\"" + a[ i ] + "\"" + SeparatorString;
+  // PC 28/8/15 correct to remove extra separator on end of line
+  i = strrstr( tmp, SeparatorString );
+  List += strsub( tmp, 0, i ) + "\n";
+  }
+return List;
+}
+
+
+// Create HTML Output for view/save
+// 28/8/15 PC Correct for more properly formatted HTML and remove empty column at end
+//            simplify loops
+string MakeListHTML( void )
+{
+string List, a[ ];
+int numHeaders, idx;
+
+List = MakeListHeader( );
+List = "<h3><b>" + List + "</b></h3>\n<p>Version: " + Version + "</p>\n<p> &nbsp; </p>\n";
+List += "<table cellspacing=5>\n";
+numHeaders = GetNumColumns( );
+for( idx = 0; idx < NumLines; idx++ )
+  {
+  List += " <tr>\n";
+  strsplit( a, Lines[ idx ], '\t' );
+  for( int i = 0; i < numHeaders; i++ )
+    {
+    if( idx == 0 )
+      a[ i ] = "<b>" + a[ i ] + "</b>";
+    List += "  <td>" + a[ i ] + "</td>\n";
+    }
+  List += " </tr>\n";
+  }
+List += "</table>\n";
+return List;
+}
+
+
+// General call to make a list top save then call right format
+string MakeList( void )
+{
+switch( OutputFormat )
+  {
+  case ofText: return MakeListText( );
+               break;
+  case ofCSV:  return MakeListCSV( );
+               break;
+  case ofHTML: return MakeListHTML( );
+               break;
+  }
+return "";
+}
+
+
+// Create output list to view in list dialog
+void ViewList( void )
+{
+dlgDialog( tr( "Bill Of Material - Preview" ) )
+  {
+  string s = MakeList( );
+  if( OutputFormat != ofHTML )
+    s = "<pre>" + s + "</pre>";
+  dlgHBoxLayout dlgSpacing( 400 );
+  dlgHBoxLayout
+    {
+    dlgVBoxLayout dlgSpacing( 300 );
+    dlgTextView( s );
+    }
+  dlgHBoxLayout
+    {
+    dlgLabel( "Version " + Version );
+    dlgStretch( 1 );
+    dlgPushButton( tr( "-Close" ) ) dlgReject( );
+    }
+  };
+}
+
+
+// Actual save that works out file naming gets a list and outputs
+void SaveList(void)
+{
+// 28/8/15 PC
+// - Change extensions to "-BOM" and .txt or .csv or .html
+// Using variables in bomdefaults.h
+string FileName;
+string FileExt;
+
+switch( OutputFormat )
+  {
+  case ofText: FileExt = FileModifier + TEXText;  //"-BOM.txt";
+               break;
+  case ofHTML: FileExt = FileModifier + HTMLext;  //"-BOM.html";
+               break;
+  case ofCSV:  FileExt = FileModifier + CSVext;   //"-BOM.csv";
+               break;
+  }
+schematic( SCH )
+FileName = filesetext( SCH.name, FileExt );
+FileName = dlgFileSave( tr( "Save Bill Of Material"), FileName );
+if( FileName )
+  {
+  string a[ ];
+  if( !fileglob( a, FileName ) || dlgMessageBox( tr( "File '" ) + FileName +
+                 tr( "' exists\n\nOverwrite?" ), tr( "+&Yes" ), tr( "-&No" ) ) == 0 )
+    output( FileName, "wt" )
+      printf( "%s", MakeList( ) ); // using "%s" to avoid problems if list contains any '%'
+  }
+}
+
+
+// Bring up extra dialog to display help
+void DisplayHelp( void )
+{
+dlgDialog( tr( "Bill Of Material - Help" ) )
+  {
+  dlgHBoxLayout dlgSpacing( 400 );
+  dlgHBoxLayout
+    {
+    dlgVBoxLayout dlgSpacing( 300 );
+    dlgTextView( language( ) == "de" ? HelpTextDE : HelpTextEN );
+    }
+  dlgHBoxLayout
+    {
+    dlgLabel( "Version " + Version );
+    dlgStretch( 1 );
+    dlgPushButton( tr( "-Close" ) )
+    dlgReject( );
+    }
+  };
+}
+
+/******* effective main here *****************/
+// Check in schematic view first
+if( !schematic )
+  {
+  dlgMessageBox(usage + tr("<hr><b>ERROR: No schematic!</b><p>\nThis program can only work in"
+                 " the schematic editor."));
+  exit(1);
+  }
+
+// Initial load of schematics and get variants
+schematic( SCH )
+  {
+  sprintf( SeparatorString, "%c", SepChars[ UseSeparator ] );
+  CurrentVariant = variant( );
+  SCH.variantdefs( VD )
+    {
+    if( CurrentVariant == VD.name )
+      VDsel = cntVD;
+    sprintf( Variants[ cntVD ], "%s", VD.name );
+    cntVD++;
+    }
+  }
+// Initial get current variant data
+setvariant( CurrentVariant );
+CollectPartData( CurrentVariant );
+GenerateList( );
+
+// Bring up main dialog
+dlgDialog( tr( "Bill Of Material" ) )
+  {
+  dlgHBoxLayout
+    {
+    dlgLabel( tr( "Current &variant ") );
+    dlgComboBox( Variants, VDsel )
+      {
+      CurrentVariant = Variants[ VDsel ];
+      setvariant( CurrentVariant );
+      CollectPartData( CurrentVariant );
+      GenerateList( );
+      }
+    dlgStretch( 1 );
+    }
+  dlgListView( "", Lines, Selected, ListSort );
+  dlgHBoxLayout
+    {
+    dlgGroup( tr( "List type" ) )
+      {
+      dlgRadioButton( tr( "&Parts" ), ListType ) GeneratePartList( );
+      dlgRadioButton( tr( "&Values" ), ListType ) GenerateValueList( );
+      dlgStretch( 1 );
+      }
+    dlgGroup( tr( "Columns" ) )
+      {
+      dlgCheckBox( tr( "Device" ), UseDevice ) GenerateList( );
+      dlgCheckBox( tr( "Package" ), UsePackage ) GenerateList( );
+      dlgCheckBox( tr( "Description" ), UseDescription ) GenerateList( );
+      dlgCheckBox( tr( "&Attributes" ), UseAttributes ) GenerateList( );
+      }
+    dlgGroup( tr( "Output format" ) )
+      {
+      dlgGridLayout
+         {
+         dlgCell( 0, 0 ) dlgRadioButton( tr( "&Text" ), OutputFormat );
+         dlgCell( 1, 0 ) dlgRadioButton( tr( "&CSV" ), OutputFormat );
+         dlgCell( 2, 0 ) dlgRadioButton( tr ( "&HTML" ), OutputFormat);
+         dlgCell( 0, 1 ) dlgHBoxLayout
+                       {
+                       dlgLabel( "Wrap at column" );
+                       dlgIntEdit( WrapText, WrapMin, WrapMax );
+                       }
+         dlgCell( 1, 1 ) dlgHBoxLayout
+                       {
+                       dlgLabel( "CSV Separator" );
+                       dlgComboBox( SepLabels, UseSeparator )
+                          sprintf( SeparatorString, "%c", SepChars[ UseSeparator ] );
+                       }
+         }
+      dlgStretch( 1 );
+      }
+    dlgStretch( 1 );
+    }
+  dlgHBoxLayout
+    {
+    dlgPushButton( tr( "+Vie&w" ) )    ViewList( );
+    dlgStretch( 1 );
+    dlgPushButton( tr( "&Save..." ) ) SaveList( );
+    dlgStretch( 1 );
+    dlgPushButton( tr( "H&elp" ) )    DisplayHelp( );
+    dlgStretch( 1 );
+    dlgLabel( "Version " + Version );
+    dlgStretch( 1 );
+    dlgPushButton( tr( "-Close" ) )   dlgAccept( );
+    }
+  };

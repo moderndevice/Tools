@@ -16,6 +16,7 @@ MENU 'Grid {\
              5m2 1 : Grid mil 5 2; Grid alt mil 1; |\
              5m5-1 :  Grid mil 5 5; Grid alt mil 1; |\
              10-5 :  Grid mil 10 1; Grid alt mil 5; |\
+            10-1 :  Grid mil 10 1; Grid alt mil 1; |\
              12.5-5 : Grid mil 12.5 1; Grid alt mil 5; |\
              25-1 : Grid mil 25 1; Grid alt mil 1; |\
              25-5 : Grid mil 25 1; Grid alt mil 5; |\
@@ -31,27 +32,27 @@ MENU 'Grid {\
             Display Useful : display none; display 1 16 17 18 19 20 21 22 23 24 25 26 121 122;|\
             Display TText : display none; display 17 18 20 21 22 23 25 26 29 48 49 51 52 121 122;|\
             Display Unrouted : display none; display 19 20 23 29 30;|\
-            Top : run  tools/toglays.ulp 1 17 18 20 21 23 25 ; Display 20;|\
-            Bottom :run tools/toglays.ulp 16 22 24 26 30 ; Display 20;|\
-            Tog_Tsilk_Bsilk :run  tools/toglays.ulp 121 122;|\
-            Tog_Bext :run  tools/toglays.ulp 22 26 30 122;|\
-            T Origins :run tools/toglays.ulp 23;|\
-            B Origins :run tools/toglays.ulp 24;|\
-            Outline :run tools/toglays.ulp 20;|\
-            Copper T only : run tools/toglays.ulp 1; window;|\
-            Copper B only:  run tools/toglays.ulp 16;|\
-            T Bitmaps :run  tools/toglays.ulp 200 201 202 203 204 205 206 207 208 209 210|\
-            B Bitmaps :run  tools/toglays.ulp 211 212 213 214|\
-            Values :run tools/toglays.ulp 27|\
+            Top : run  toglays.ulp 1 17 18 20 21 23 25 ; Display 20;|\
+            Bottom :run toglays.ulp 16 22 24 26 30 ; Display 20;|\
+            Tog_Tsilk_Bsilk :run  toglays.ulp 121 122;|\
+            Tog_Bext :run  toglays.ulp 22 26 30 122;|\
+            T Origins :run toglays.ulp 23;|\
+            B Origins :run toglays.ulp 24;|\
+            Outline :run toglays.ulp 20;|\
+            Copper T only : run toglays.ulp 1; window;|\
+            Copper B only:  run toglays.ulp 16;|\
+            T Bitmaps :run  toglays.ulp 200 201 202 203 204 205 206 207 208 209 210|\
+            B Bitmaps :run  toglays.ulp 211 212 213 214|\
+            Values :run toglays.ulp 27|\
             TopOnTop : set Option.LayerSequence 1 16 ; window;|\
             BottomOnTop : set Option.LayerSequence 16 1 ; window;\
             Rats :  rats; |\
             No-Rats RIPUP @: RIPUP @; \
          }'\
       'ULP{\
-        AlignD: run tools/AlignD.ulp;|\
-        Snap: run tools/Snap.ulp;|\
-        TextTool: run tools/TextToolv1.0.ulp;|\
+        AlignD: run AlignD.ulp;|\
+        Snap: run Snap.ulp;|\    
+        TextTool: run TextToolv1.0.ulp;|\
         Smash All: group all; smash (C>0 0);\      
           }'\
      'View {\
