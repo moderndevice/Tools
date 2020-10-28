@@ -7,8 +7,11 @@
 
 MENU 'Grid {\
              Metric   {\
-                        1m1-.1   : Grid mm 1 1; Grid alt mm .1;|\
-                        1m1-.05   : Grid mm 1 1; Grid alt mm .05;\
+                        2m1-.5   : Grid mm 2 1; Grid alt mm .5;|\
+                        1m1-.05   : Grid mm 1 1; Grid alt mm .05;|\
+                        0.5m1-.025   : Grid mm 0.5 1; Grid alt mm .025;|\
+                        0.25m1-.025   : Grid mm .25 1; Grid alt mm .025;|\
+                        0.1m1-.01   : Grid mm .1 1; Grid alt mm .01;\
                       } |\ 
              1-.1 : Grid mil 1 1; Grid alt mil .1; |\  
              1-.25 : Grid mil 1 1; Grid alt mil .25; |\           
